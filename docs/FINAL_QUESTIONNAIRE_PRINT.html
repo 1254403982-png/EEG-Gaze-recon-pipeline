@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>阅读理解与智能辅助实验最终问卷</title>
+  <style>
+    @page { size: A4; margin: 10mm 12mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #111; font-family: "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; font-size: 9pt; line-height: 1.25; }
+    h1 { text-align: center; font-size: 16pt; margin: 0 0 3mm; }
+    h2 { font-size: 10.5pt; border-bottom: 1px solid #222; padding-bottom: 1mm; margin: 3mm 0 1.5mm; }
+    p { margin: 1.2mm 0; }
+    .meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3mm; margin-bottom: 2mm; }
+    .line { display: inline-block; min-width: 24mm; border-bottom: 1px solid #333; height: 4mm; vertical-align: bottom; }
+    .note { font-size: 8pt; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 1mm 0 2mm; }
+    th, td { border: 1px solid #333; padding: 1.1mm 1mm; vertical-align: middle; }
+    th { text-align: center; font-weight: 700; }
+    .q { width: 46%; }
+    .opt { width: 10.8%; text-align: center; font-size: 8pt; }
+    .mark { text-align: center; font-size: 12pt; line-height: 1; }
+    .choice { white-space: nowrap; }
+    .open { height: 8mm; border-bottom: 1px solid #777; }
+    .footer { margin-top: 2mm; font-size: 8pt; }
+  </style>
+</head>
+<body>
+  <h1>阅读理解与智能辅助实验最终问卷</h1>
+  <div class="meta">
+    <div>被试编号：<span class="line"></span></div>
+    <div>日期：<span class="line"></span></div>
+    <div>主试编号：<span class="line"></span></div>
+  </div>
+  <p><strong>说明：</strong>请根据刚刚完成的三轮任务整体体验作答。请使用“第一轮、第二轮、第三轮”回忆，不需要填写或猜测具体实验条件名称。没有相关体验时请选择“不适用”或相应的“没有/无法判断”。</p>
+
+  <h2>一、三轮整体比较</h2>
+  <table>
+    <tr><th class="q">题目</th><th class="opt">第一轮</th><th class="opt">第二轮</th><th class="opt">第三轮</th><th class="opt">没有明显差异</th><th class="opt">无法判断</th></tr>
+    <tr><td>1. 哪一轮的 AI 辅助最能帮助你理解阅读材料？</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td></tr>
+    <tr><td>2. 哪一轮最容易获得你真正需要的解释或帮助？</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td></tr>
+    <tr><td>3. 哪一轮的 AI 解释最清楚易懂？</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td></tr>
+    <tr><td>4. 哪一轮的辅助最符合你当时的具体阅读情况？</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td></tr>
+  </table>
+
+  <h2>二、主动辅助体验</h2>
+  <p>5. 在三轮中，系统是否曾在你没有主动发送问题时询问是否需要帮助？</p>
+  <p class="choice">□ 是　　□ 否　　□ 不确定　　□ 没有相关体验</p>
+  <p>若选择“是”：主动询问的时机是否符合你当时的阅读需要？（1 = 完全不符合，4 = 中立，7 = 完全符合）</p>
+  <p class="choice">□1　□2　□3　□4　□5　□6　□7　□ 不适用</p>
+  <p>若选择“否”：是否有你希望获得帮助、但系统没有主动询问的时刻？</p>
+  <p class="choice">□ 没有　　□ 有一次　　□ 有多次　　□ 不确定　　□ 不适用</p>
+  <p>6. 主动辅助是否打断了你的阅读思路？</p>
+  <p class="choice">□ 从未　　□ 很少　　□ 有时　　□ 经常　　□ 总是　　□ 不适用</p>
+
+  <h2>三、两种主动辅助方式比较</h2>
+  <p class="note">主试在发放前填写“主动方式 A/B”的随机映射；不要向被试透露具体条件名称。</p>
+  <table>
+    <tr><th class="q">题目</th><th class="opt">主动方式 A</th><th class="opt">主动方式 B</th><th class="opt">无明显差异</th><th class="opt">两种都未出现</th><th class="opt">无法判断</th></tr>
+    <tr><td>1. 哪种方式更准确地识别了你需要帮助的时刻？</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td></tr>
+    <tr><td>2. 哪种方式提出询问的时机更符合你的阅读需要？</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td></tr>
+    <tr><td>3. 哪种方式较少在你不需要帮助时提出询问？</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td></tr>
+    <tr><td>4. 哪种方式较少漏掉你实际需要帮助的时刻？</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td><td class="mark">□</td></tr>
+  </table>
+
+  <h2>四、开放题</h2>
+  <p>1. 请描述一次系统比较准确地理解你需要帮助的经历。</p><div class="open"></div>
+  <p>2. 请描述一次系统判断错误的经历（提示过早、过晚，或漏掉帮助需求）。</p><div class="open"></div>
+  <p>3. 你认为理想的自主辅助应该在什么情况下出现？</p><div class="open"></div>
+  <p>4. 你觉得有什么需要改进的？</p><div class="open"></div>
+  <p class="footer">感谢你的参与。请检查所有题目后交回问卷。</p>
+</body>
+</html>

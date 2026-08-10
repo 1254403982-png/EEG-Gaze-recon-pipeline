@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recon Pipeline</title>
+  <style>
+    :root { color-scheme: light; --ink:#18202a; --muted:#647184; --line:#dce2e8; --blue:#1859b5; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; display:grid; place-items:center; background:#f3f5f7; color:var(--ink);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI","PingFang SC",sans-serif; }
+    main { width:min(760px,calc(100% - 32px)); padding:42px; background:white; border:1px solid var(--line);
+      border-radius:20px; box-shadow:0 20px 60px rgba(25,36,50,.08); }
+    .brand { display:flex; align-items:center; gap:14px; margin-bottom:28px; }
+    .brand img { width:42px; height:42px; border-radius:10px; }
+    h1 { margin:0; font-size:28px; letter-spacing:-.03em; }
+    p { color:var(--muted); line-height:1.7; }
+    nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:30px; }
+    a { padding:20px; border:1px solid var(--line); border-radius:14px; color:var(--ink); text-decoration:none;
+      transition:.18s ease; }
+    a:hover { border-color:var(--blue); transform:translateY(-2px); box-shadow:0 10px 24px rgba(24,89,181,.10); }
+    a strong { display:block; color:var(--blue); margin-bottom:6px; }
+    a span { color:var(--muted); font-size:14px; }
+    @media (max-width:600px) { main{padding:26px} nav{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">
+      <img src="/ui/assets/OMNI_ICON.svg" alt="">
+      <div><h1>Recon EEG Pipeline</h1><p style="margin:3px 0 0">BrainCo EEG · Gaze · Policy</p></div>
+    </div>
+    <p>服务已启动。实验操作和研究者监控已分离，两个页面使用同一个实时状态与 Policy 后端。</p>
+    <nav>
+      <a href="/experiment"><strong>进入实验平台</strong><span>被试任务、问卷、解释和实验记录</span></a>
+      <a href="/monitor"><strong>打开实时监控</strong><span>EEG、gaze、同步状态和 Policy 审计</span></a>
+    </nav>
+  </main>
+</body>
+</html>
+

@@ -1,0 +1,13 @@
+{
+  "extends": "development.json",
+  "policy": {
+    "c3_policy_version": "v2",
+    "cooldown_seconds": 30.0,
+    "required_confirmations": 3,
+    "minimum_evidence_seconds": 0.45,
+    "minimum_trial_seconds": 30.0,
+    "max_automatic_offers_per_trial": 2,
+    "allow_degraded_c3": false,
+    "require_joint_c3_evidence": true
+  }
+}

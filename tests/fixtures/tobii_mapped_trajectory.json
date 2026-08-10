@@ -1,0 +1,40 @@
+{
+  "source": "anonymized excerpt from runs/4_condition_1_20260730_211632_901745",
+  "valid": true,
+  "reading_aoi": {
+    "id": "readingContent",
+    "tag": "readingContent",
+    "x_min": 0.30,
+    "y_min": 0.25,
+    "x_max": 0.65,
+    "y_max": 0.90
+  },
+  "trajectory": [
+    {"x_normalized": 0.570500, "y_normalized": 0.723160, "age_ms": 875},
+    {"x_normalized": 0.575224, "y_normalized": 0.828296, "age_ms": 875},
+    {"x_normalized": 0.575623, "y_normalized": 0.852518, "age_ms": 829},
+    {"x_normalized": 0.577451, "y_normalized": 0.849714, "age_ms": 829},
+    {"x_normalized": 0.584527, "y_normalized": 0.836446, "age_ms": 829},
+    {"x_normalized": 0.588297, "y_normalized": 0.808009, "age_ms": 766},
+    {"x_normalized": 0.587869, "y_normalized": 0.766883, "age_ms": 766},
+    {"x_normalized": 0.590619, "y_normalized": 0.738126, "age_ms": 750},
+    {"x_normalized": 0.474651, "y_normalized": 0.640603, "age_ms": 610},
+    {"x_normalized": 0.446159, "y_normalized": 0.391037, "age_ms": 360},
+    {"x_normalized": 0.434793, "y_normalized": 0.286495, "age_ms": 344},
+    {"x_normalized": 0.367788, "y_normalized": 0.359866, "age_ms": 344},
+    {"x_normalized": 0.351297, "y_normalized": 0.375594, "age_ms": 266},
+    {"x_normalized": 0.345592, "y_normalized": 0.386589, "age_ms": 266},
+    {"x_normalized": 0.353473, "y_normalized": 0.398245, "age_ms": 266},
+    {"x_normalized": 0.354469, "y_normalized": 0.402893, "age_ms": 266},
+    {"x_normalized": 0.353353, "y_normalized": 0.405166, "age_ms": 188},
+    {"x_normalized": 0.352546, "y_normalized": 0.407212, "age_ms": 188},
+    {"x_normalized": 0.352593, "y_normalized": 0.409960, "age_ms": 172},
+    {"x_normalized": 0.346965, "y_normalized": 0.408442, "age_ms": 172},
+    {"x_normalized": 0.347096, "y_normalized": 0.393575, "age_ms": 94},
+    {"x_normalized": 0.347015, "y_normalized": 0.393866, "age_ms": 94},
+    {"x_normalized": 0.347957, "y_normalized": 0.394849, "age_ms": 94},
+    {"x_normalized": 0.348897, "y_normalized": 0.394317, "age_ms": 94},
+    {"x_normalized": 0.351104, "y_normalized": 0.390262, "age_ms": 16},
+    {"x_normalized": 0.351771, "y_normalized": 0.391684, "age_ms": 0}
+  ]
+}

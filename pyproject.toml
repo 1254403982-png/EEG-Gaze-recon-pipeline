@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "recon-eeg-pipeline"
+version = "0.1.0"
+description = "Realtime BrainCo EEG and gaze policy pipeline for controlled experiments."
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+dependencies = [
+  "numpy>=1.23",
+  "scipy>=1.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.4"]
+tobii = [
+  "g3pylib @ git+https://github.com/tobii/glasses3-pylib.git@5868e2d327a077cb6bbe276182188b81fc90f224",
+  "Pillow>=9",
+  "opencv-contrib-python-headless>=4.8,<5",
+]
+brainco = ["bc-ecap-sdk>=0.5,<0.6", "zeroconf>=0.47"]
+
+[project.scripts]
+recon-pipeline = "recon_pipeline.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+recon_pipeline = ["web/*", "web/assets/*", "web/question_bank/*.js", "web/question_bank/*/*.js"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "SIM", "RUF"]

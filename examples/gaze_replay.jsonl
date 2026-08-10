@@ -1,0 +1,3 @@
+{"status":"available","quality":"pass","x_normalized":0.42,"y_normalized":0.61,"primary_aoi":"reading_content","fixation_duration_ms":420,"pupil_dilation":0.25,"gaze_entropy":0.30,"blink_rate":0.10,"valid_sample_ratio":0.96}
+{"status":"available","quality":"pass","x_normalized":0.45,"y_normalized":0.60,"primary_aoi":"reading_content","fixation_duration_ms":1100,"pupil_dilation":0.72,"gaze_entropy":0.68,"blink_rate":0.22,"valid_sample_ratio":0.93}
+

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Realtime Monitor · Recon Pipeline</title>
+  <link rel="stylesheet" href="/ui/monitor.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/ui/assets/OMNI_ICON.svg" alt="">
+      <div><strong>实时数据监控</strong><span>EEG · Gaze · Policy</span></div>
+    </div>
+    <nav class="view-tabs" aria-label="监控页面">
+      <button type="button" class="active" data-view-tab="gaze">眼动映射</button>
+      <button type="button" data-view-tab="eeg">脑电指标</button>
+      <button type="button" data-view-tab="policy">Policy</button>
+    </nav>
+    <div class="top-actions">
+      <span id="connection" class="status waiting"><i></i>连接中</span>
+      <a href="/experiment" target="_blank" rel="noopener">实验平台</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary-strip">
+      <div><span>Session</span><strong id="session">—</strong><small id="trial">trial: —</small></div>
+      <div><span>Condition</span><strong id="condition">C1</strong><small id="sources">无自适应数据源</small></div>
+      <div><span>EEG</span><strong id="eegStatus">Unavailable</strong><small id="eegAge">—</small></div>
+      <div><span>Gaze</span><strong id="gazeStatus">Unavailable</strong><small id="gazeAge">—</small></div>
+      <div><span>Screen Map</span><strong id="mapStatus">Waiting</strong><small id="mapAge">—</small></div>
+    </section>
+
+    <section class="monitor-view active" data-monitor-view="gaze">
+      <article class="panel mapping-panel">
+        <div class="panel-head">
+          <div><span class="eyebrow">GAZE → EXPERIMENT</span><h1>被试屏幕注视位置</h1></div>
+          <div class="panel-actions">
+            <button id="tobiiCalibrate" type="button">Tobii 校准</button>
+            <span id="tobiiCalibrationStatus" class="chip">idle</span>
+            <span id="mappingQuality" class="chip">layout_missing</span>
+          </div>
+        </div>
+        <div id="experimentStage" class="experiment-stage">
+          <div id="mirrorSurface" class="mirror-surface">
+            <iframe id="experimentMirror" src="/ui/experiment.html?monitorMirror=1" title="实验文档只读镜像" tabindex="-1"></iframe>
+            <canvas id="screenTrajectory"></canvas>
+            <div id="screenGazePoint" class="screen-gaze-point hidden"></div>
+          </div>
+          <div id="mappingEmpty" class="empty-state">等待实验页面布局与屏幕映射</div>
+        </div>
+        <dl class="mapping-footer">
+          <div><dt>相机坐标</dt><dd id="cameraCoords">—</dd></div>
+          <div><dt>屏幕坐标</dt><dd id="screenCoords">—</dd></div>
+          <div><dt>聚类中心</dt><dd id="focusCoords">—</dd></div>
+          <div><dt>标记检测</dt><dd id="markerCount">0 / 4</dd></div>
+          <div><dt>映射延迟</dt><dd id="homographyAge">—</dd></div>
+          <div><dt>轨迹点数</dt><dd id="trajectoryCount">0</dd></div>
+        </dl>
+      </article>
+    </section>
+
+    <section class="monitor-view" data-monitor-view="eeg" hidden>
+      <div class="eeg-page-grid">
+        <article class="panel load-panel">
+          <div class="panel-head">
+            <div><span class="eyebrow">EEG LOAD</span><h1>认知负荷</h1></div>
+            <span id="eegQuality" class="chip">unavailable</span>
+          </div>
+          <div class="load-gauge">
+            <svg viewBox="0 0 260 150" role="img" aria-label="cognitive load">
+              <path class="gauge-bg" d="M25 130 A105 105 0 0 1 235 130"/>
+              <path id="gaugeArc" class="gauge-value" d="M25 130 A105 105 0 0 1 235 130"/>
+            </svg>
+            <div><strong id="load">—</strong><span>0–100</span></div>
+          </div>
+        </article>
+
+        <article class="panel eeg-metrics-panel">
+          <div class="panel-head"><div><span class="eyebrow">DECODER</span><h1>实时指标</h1></div></div>
+          <dl class="big-metrics">
+            <div><dt>Frontal Theta</dt><dd id="frontalTheta">—</dd></div>
+            <div><dt>Posterior Alpha</dt><dd id="alphaPower">—</dd></div>
+            <div><dt>Alpha Peak</dt><dd id="alphaPeak">—</dd></div>
+            <div><dt>Log TLI</dt><dd id="workloadIndex">—</dd></div>
+          </dl>
+        </article>
+
+        <article class="panel eeg-chart-panel">
+          <div class="panel-head"><div><span class="eyebrow">HISTORY</span><h1>认知负荷时间线</h1></div><small>最近 120 秒</small></div>
+          <canvas id="loadChart"></canvas>
+        </article>
+
+        <article class="panel channel-panel">
+          <div class="panel-head"><div><span class="eyebrow">CHANNELS</span><h1>通道状态</h1></div></div>
+          <dl class="channel-details">
+            <div><dt>采集通道</dt><dd id="eegChannels">—</dd></div>
+            <div><dt>解码通道</dt><dd id="decoderChannels">—</dd></div>
+            <div><dt>当前窗口异常</dt><dd id="badChannels">无</dd></div>
+            <div><dt title="7 个后部 Alpha 通道中，本窗口因质量检查未参与解码的通道">后部解码排除（7导内）</dt><dd id="decoderBadChannels">无</dd></div>
+            <div class="wide"><dt>异常原因</dt><dd id="badChannelReasons">无</dd></div>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <section class="monitor-view" data-monitor-view="policy" hidden>
+      <div class="policy-page-grid">
+        <article class="panel policy-panel">
+          <div class="panel-head">
+            <div><span class="eyebrow">POLICY OUTPUT</span><h1>最新策略决策</h1></div>
+            <span id="policyId" class="chip">#—</span>
+          </div>
+          <div class="policy-main">
+            <span id="policyLevel" class="policy-level none">none</span>
+            <div><strong id="policyAction">no_adaptation</strong><p id="policyMode">UI mode · normal</p></div>
+          </div>
+          <div class="source-flow">
+            <span id="sourceEEG">EEG</span><i>+</i><span id="sourceGaze">Eye</span><i>→</i><span class="active">Policy</span>
+          </div>
+          <div id="reasons" class="reason-list"></div>
+          <div class="policy-footer">
+            <span>Confidence <strong id="confidence">0%</strong></span>
+            <span>Degraded <strong id="degraded">No</strong></span>
+            <span>Suppressed <strong id="suppressed">No</strong></span>
+          </div>
+        </article>
+
+        <article class="panel gaze-window-panel">
+          <div class="panel-head">
+            <div><span class="eyebrow">POLICY INPUT</span><h1>眼动时间窗</h1></div>
+            <span id="gazeQuality" class="chip">unavailable</span>
+          </div>
+          <dl class="big-metrics gaze-metrics">
+            <div><dt>AOI Dwell</dt><dd id="aoiDwell">—</dd></div>
+            <div><dt>Fixation Count</dt><dd id="fixationCount">—</dd></div>
+            <div><dt>Mean Fixation</dt><dd id="meanFixation">—</dd></div>
+            <div><dt>回视次数</dt><dd id="revisitCount">—</dd></div>
+            <div><dt>回视时间</dt><dd id="revisitTime">—</dd></div>
+            <div><dt>Valid samples</dt><dd id="validSamples">—</dd></div>
+            <div><dt>Scene AOI</dt><dd id="aoi">—</dd></div>
+            <div><dt>Eye Score</dt><dd id="eyeScore">—</dd></div>
+          </dl>
+        </article>
+
+        <article class="panel raw-panel">
+          <div class="panel-head">
+            <div><span class="eyebrow">AUDIT</span><h1>完整输入与输出</h1></div>
+            <button id="copyJson" type="button">复制 JSON</button>
+          </div>
+          <pre id="rawJson">{}</pre>
+        </article>
+      </div>
+    </section>
+  </main>
+  <script src="/ui/monitor.js"></script>
+</body>
+</html>

@@ -1,0 +1,3584 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Omni Intel · 阅读理解与认知负荷实验</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <style>
+    /* ===== NeuraDock Design Language (preserved from original) ===== */
+    :root {
+      --ink: #17212b;
+      --muted: #657586;
+      --line: #d7e0e7;
+      --bg: #f2f6f8;
+      --panel: #ffffff;
+      --blue: #245f9f;
+      --blue-soft: #e3eef9;
+      --teal: #12846f;
+      --teal-soft: #ddf2ec;
+      --amber: #b56e09;
+      --amber-soft: #fff0ca;
+      --red: #c83f34;
+      --red-soft: #ffe2dc;
+      --violet: #6b57a8;
+      --shadow: 0 16px 34px rgba(25, 39, 52, 0.08);
+      color: var(--ink);
+      background: var(--bg);
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+    }
+    body {
+      min-width: 320px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(36, 95, 159, 0.11), transparent 34%),
+        linear-gradient(180deg, #f8fbfc 0%, #e9f0f4 100%);
+      letter-spacing: 0;
+    }
+    button, input, textarea { font: inherit; }
+    button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      padding: 0 13px;
+      font-weight: 850;
+      cursor: pointer;
+      transition: transform 100ms ease, border-color 120ms ease;
+    }
+    button:hover { border-color: #9db0bf; }
+    button:active { transform: scale(0.95); }
+    button.primary {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #ffffff;
+    }
+    button.primary:hover { border-color: #1a4f8a; }
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ===== Shared NeuraDock Components (from originals) ===== */
+    .brand-mark {
+      display: grid;
+      width: 44px; height: 44px;
+      place-items: center;
+      border-radius: 8px;
+      background: #172430;
+      color: #ffffff;
+      font-size: 13px; font-weight: 950;
+    }
+    .brand, .label {
+      color: var(--muted);
+      font-size: 12px; font-weight: 900;
+      text-transform: uppercase;
+    }
+    .status-pill, .mode-chip {
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--muted);
+      padding: 0 10px;
+      font-size: 12px; font-weight: 900;
+      white-space: nowrap;
+    }
+    .status-pill.is-live {
+      border-color: #9ed8cd; background: var(--teal-soft); color: var(--teal);
+    }
+    .status-pill.is-error {
+      border-color: #efaaa1; background: var(--red-soft); color: var(--red);
+    }
+    .status-pill.is-idle { color: var(--muted); background: #fff; }
+
+    .quality-lamp {
+      width: 22px; height: 22px;
+      border: 3px solid #ffffff;
+      border-radius: 999px;
+      background: #a8b2bc;
+      box-shadow: 0 0 0 1px var(--line), 0 0 16px rgba(89, 103, 115, 0.25);
+    }
+    .quality-lamp.is-pass {
+      background: var(--teal);
+      box-shadow: 0 0 0 1px #9bd6cb, 0 0 18px rgba(18, 132, 111, 0.4);
+    }
+    .quality-lamp.is-idle {
+      background: #a8b2bc;
+      box-shadow: 0 0 0 1px var(--line), 0 0 16px rgba(89, 103, 115, 0.25);
+    }
+    .quality-lamp.is-warning, .quality-lamp.is-fail {
+      background: var(--amber);
+      box-shadow: 0 0 0 1px #e2bc66, 0 0 18px rgba(181, 110, 9, 0.38);
+    }
+
+    .message-banner {
+      display: flex; align-items: center;
+      min-height: 44px; margin-top: 14px;
+      padding: 10px 14px;
+      border: 1px solid #e4bc60; border-radius: 8px;
+      background: var(--amber-soft); color: #704100;
+      font-weight: 900;
+    }
+    .message-banner.is-hidden { display: none; }
+    .message-banner.is-high {
+      border-color: #ed9b92; background: var(--red-soft); color: #84261e;
+    }
+    .message-banner.is-low {
+      border-color: #9ed8cd; background: var(--teal-soft); color: #075d50;
+    }
+    .message-banner.is-quality {
+      border-color: #e4bc60; background: var(--amber-soft); color: #704100;
+    }
+
+    .panel, .metric-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    /* ===== Page Container (NeuraDock app-shell pattern) ===== */
+    .app-shell {
+      width: min(1560px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    /* ===== Topbar (from Adaptive/Cognitive/Game demo) ===== */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 72px;
+      padding: 10px 0 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .identity {
+      display: flex; align-items: center; gap: 12px; min-width: 0;
+    }
+    h1 { margin: 2px 0 0; font-size: 27px; line-height: 1.1; }
+    h2 { margin: 4px 0 0; font-size: 20px; line-height: 1.1; }
+    .api-controls {
+      display: grid;
+      grid-template-columns: auto minmax(210px, 320px) auto auto;
+      align-items: center; gap: 10px;
+    }
+    .api-controls label { color: var(--muted); font-weight: 850; }
+    .api-controls input {
+      min-height: 38px;
+      border: 1px solid var(--line); border-radius: 8px;
+      padding: 0 12px; background: #ffffff; color: var(--ink);
+    }
+
+    /* ===== HUD Metrics Row (from Game/Visual Search demo) ===== */
+    .hud-grid {
+      display: grid;
+      grid-template-columns: minmax(190px, 1fr) minmax(190px, 1fr) minmax(210px, 1fr) minmax(210px, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .metric-card {
+      min-height: 122px;
+      padding: 14px;
+    }
+    .metric-card strong {
+      display: block; margin-top: 8px; font-size: 28px; line-height: 1;
+    }
+    .metric-card > span:last-child {
+      display: block; margin-top: 8px;
+      color: var(--muted); font-size: 13px;
+    }
+    #loadValue { font-size: 52px; }
+    .metric-card.is-low #loadValue { color: var(--teal); }
+    .metric-card.is-moderate #loadValue { color: var(--amber); }
+    .metric-card.is-high #loadValue { color: var(--red); }
+
+    .quality-line {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 8px;
+    }
+    .difficulty-chip {
+      display: inline-flex;
+      align-items: center; justify-content: center;
+      min-height: 28px;
+      padding: 0 12px;
+      border-radius: 999px;
+      font-size: 13px; font-weight: 900;
+      border: 1px solid var(--line);
+      background: #ffffff;
+    }
+    .difficulty-chip.is-low { border-color: #9ed8cd; background: var(--teal-soft); color: var(--teal); }
+    .difficulty-chip.is-moderate { border-color: #e2bc66; background: var(--amber-soft); color: var(--amber); }
+    .difficulty-chip.is-high { border-color: #efaaa1; background: var(--red-soft); color: var(--red); }
+
+    /* ===== Main Content Grid (65:35 ratio, from Visual Search workspace pattern) ===== */
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(520px, 1.65fr) minmax(320px, 0.85fr);
+      gap: 16px;
+      margin-top: 16px;
+      align-items: stretch;
+    }
+
+    /* ===== Main Page: fullscreen no-scroll layout ===== */
+    #mainPage.app-shell {
+      width: 100vw;
+      max-width: 100vw;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #mainPage .main-grid {
+      height: 100vh;
+      margin-top: 0;
+      gap: 0;
+    }
+
+    /* ===== Left: Reading Material Panel ===== */
+    .reading-panel {
+      padding: 14px 20px;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 12px;
+      border-radius: 0;
+      border-right: 3px solid #9db8cc;
+    }
+    .reading-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .reading-meta {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .reading-content {
+      overflow-y: auto;
+      padding-right: 12px;
+      font-family: "Times New Roman", Georgia, "Noto Serif SC", "Microsoft YaHei", serif;
+    }
+    .reading-content h3 {
+      margin: 24px 0 10px;
+      font-size: 16px; font-weight: 800;
+      line-height: 1.4;
+      padding-top: 10px;
+      border-top: 2px solid #cdd8e0;
+      color: #14283b;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .reading-content p {
+      margin: 12px 0;
+      font-size: 14.5px; line-height: 1.75;
+      color: #1f2a33;
+      text-align: justify;
+    }
+    .reading-content ul {
+      margin: 10px 0;
+      padding-left: 20px;
+      font-size: 14.5px; line-height: 1.65;
+      color: #1f2a33;
+    }
+    .reading-content ul li { margin-bottom: 4px; }
+    .reading-content strong { color: #0d1f2e; }
+    .formula-block {
+      margin: 18px 0;
+      padding: 10px 16px;
+      border: none;
+      border-left: 4px solid var(--blue);
+      border-radius: 0 8px 8px 0;
+      background: #f4f8fc;
+      font-family: "Cambria Math", "Times New Roman", "Segoe UI Symbol", Georgia, serif;
+      font-size: 15px;
+      line-height: 1.5;
+      color: #102131;
+    }
+    .formula-block .formula-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--blue);
+      font-size: 10px; font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .chart-placeholder {
+      margin: 20px 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      min-height: 180px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .data-table {
+      width: 100%;
+      margin: 14px 0;
+      border-collapse: collapse;
+      font-size: 12px;
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    .data-table th {
+      padding: 7px 8px;
+      border: 1px solid #d5dce3;
+      background: #eef3f7;
+      color: #3d4f5f;
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 0.3px;
+    }
+    .data-table td {
+      padding: 7px 8px;
+      border: 1px solid #dce3e8;
+      text-align: center;
+      color: #1f2a33;
+    }
+    .data-table tr:nth-child(even) td { background: #fafbfc; }
+
+    /* ===== Bottom Controls (from Adaptive/Game pattern) ===== */
+    .bottom-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .progress-strip {
+      display: flex; align-items: center; gap: 10px;
+      color: var(--muted); font-size: 13px; font-weight: 900;
+    }
+    .progress-bar {
+      width: 160px; height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--teal-soft) 0 30%, var(--amber-soft) 30% 70%, var(--red-soft) 70% 100%);
+      border: 1px solid var(--line);
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-fill {
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      background: var(--teal);
+      border-radius: 999px;
+      transition: width 200ms ease;
+    }
+
+    /* ===== Right: AI Chat Panel (new, but using NeuraDock panel styling) ===== */
+    .chat-panel {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      height: 100vh;
+      gap: 0;
+    }
+    .chat-header {
+      padding: 10px 15px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-avatar {
+      width: 20px; height: 20px;
+      border-radius: 0;
+      background: var(--blue);
+      color: #ffffff;
+      display: grid; place-items: center;
+      font-size: 0; font-weight: 950;
+    }
+    .chat-header-info { min-width: 0; }
+    .chat-header-title { font-size: 16px; font-weight: 900; }
+    .chat-header-status {
+      color: var(--teal); font-size: 12px; font-weight: 900;
+    }
+    .chat-header-status.is-offline { color: var(--muted); }
+
+    /* ── Chat Messages (bubble style) ── */
+    .chat-messages {
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: #f5f7f9;
+    }
+    .chat-msg-row {
+      display: flex; gap: 8px;
+      max-width: 90%;
+      animation: msgIn 200ms ease;
+    }
+    .chat-msg-row.is-ai {
+      align-self: flex-start; flex-direction: row;
+    }
+    .chat-msg-row.is-user {
+      align-self: flex-end; flex-direction: row-reverse;
+    }
+    .chat-msg-row.is-system {
+      align-self: center; max-width: 100%;
+    }
+    @keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    .chat-bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      line-height: 1.6;
+      font-size: 14px;
+      word-break: break-word;
+    }
+    .chat-msg-row.is-ai .chat-bubble {
+      background: #ffffff;
+      color: var(--ink);
+      border: 1px solid #dce3e9;
+      border-top-left-radius: 4px;
+    }
+    .chat-msg-row.is-user .chat-bubble {
+      background: var(--blue);
+      color: #ffffff;
+      border-top-right-radius: 4px;
+    }
+    .chat-msg-row.is-system .chat-bubble {
+      background: var(--amber-soft);
+      color: #704100;
+      border: 1px solid #e4bc60;
+      text-align: center;
+      font-size: 13px;
+      border-radius: 8px;
+    }
+    .chat-bubble p { margin: 4px 0; }
+    .chat-bubble p:first-child { margin-top: 0; }
+    .chat-bubble p:last-child { margin-bottom: 0; }
+    .chat-bubble ul, .chat-bubble ol { margin: 4px 0; padding-left: 18px; }
+    .chat-bubble code {
+      background: rgba(0,0,0,0.06); padding: 1px 5px;
+      border-radius: 3px; font-size: 13px;
+    }
+    .chat-bubble pre {
+      background: #1e2a34; color: #d4e8f0; padding: 10px 14px;
+      border-radius: 6px; overflow-x: auto; font-size: 13px; margin: 6px 0;
+    }
+    .chat-bubble strong { font-weight: 800; }
+    .chat-bubble em { font-style: italic; }
+
+    .chat-avatar-mini {
+      width: 28px; height: 28px; border-radius: 8px;
+      flex-shrink: 0; display: grid; place-items: center;
+      font-size: 10px; font-weight: 900; color: #fff;
+    }
+    .is-ai .chat-avatar-mini { background: var(--blue); }
+    .is-user .chat-avatar-mini { background: var(--teal); }
+
+    /* ── Typing indicator ── */
+    .typing-indicator {
+      display: flex; align-items: center; gap: 9px;
+      padding: 10px 14px;
+      background: #ffffff; border: 1px solid #dce3e9;
+      border-radius: 12px; border-top-left-radius: 4px;
+      max-width: 190px; align-self: flex-start;
+      color: var(--muted); font-size: 12px; font-weight: 800;
+    }
+    .typing-spinner {
+      width: 18px; height: 18px; flex: 0 0 18px;
+      border: 3px solid #dce6ef; border-top-color: var(--blue);
+      border-radius: 999px; animation: typingSpin 800ms linear infinite;
+    }
+    @keyframes typingSpin { to { transform: rotate(360deg); } }
+
+    .screen-fiducial {
+      position: fixed; z-index: 50; width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.96); border-radius: 2px;
+      pointer-events: none;
+    }
+    .screen-fiducial[data-screen-marker="10"] { background: #00e5ff; }
+    .screen-fiducial[data-screen-marker="11"] { background: #ff2bd6; }
+    .screen-fiducial[data-screen-marker="12"] { background: #ffe600; }
+    .screen-fiducial[data-screen-marker="13"] { background: #28e06f; }
+    .screen-fiducial.is-tl { top: 0; left: 0; }
+    .screen-fiducial.is-tr { top: 0; right: 0; }
+    .screen-fiducial.is-br { right: 0; bottom: 0; }
+    .screen-fiducial.is-bl { bottom: 0; left: 0; }
+
+    /* ── Condition Buttons ── */
+    .explain-buttons {
+      padding: 8px 14px;
+      border-top: 1px solid var(--line);
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .explain-btn {
+      flex: 1; min-height: 32px; padding: 4px 6px;
+      border: 1.5px solid var(--line); border-radius: 6px;
+      background: #ffffff; color: var(--ink);
+      font-size: 12px; font-weight: 800; cursor: pointer;
+      transition: all 120ms ease; white-space: nowrap;
+    }
+    .explain-btn:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-soft); }
+    .explain-btn.is-active { border-color: var(--blue); background: var(--blue); color: #fff; }
+
+    /* ── Paste Input ── */
+    .chat-input-area {
+      padding: 10px 14px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .chat-input {
+      min-height: 40px; padding: 9px 12px;
+      border: 2px dashed var(--line); border-radius: 8px;
+      background: #fbfcfd; color: var(--muted);
+      font-size: 14px; resize: none; line-height: 1.5;
+      transition: border-color 150ms;
+      cursor: pointer;
+    }
+    .chat-input:focus { border-color: var(--blue); border-style: solid; color: var(--ink); outline: none; }
+    .chat-input.has-text { border-style: solid; color: var(--ink); cursor: text; }
+    .send-btn {
+      min-height: 40px; padding: 0 16px; border-radius: 8px;
+      background: var(--blue); color: #ffffff; border: none;
+      font-weight: 900; cursor: pointer; font-size: 14px;
+    }
+    .send-btn:hover { background: #1a4f8a; }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Condition Tabs ── */
+    .condition-tabs {
+      display: flex; gap: 4px; padding: 4px; margin: 6px 14px;
+      background: #eef2f6; border-radius: 8px;
+    }
+    .condition-tab {
+      flex: 1; min-height: 30px; padding: 0 6px;
+      border: none; border-radius: 6px; background: transparent;
+      color: var(--muted); font-size: 11px; font-weight: 800;
+      cursor: pointer; transition: all 150ms;
+    }
+    .condition-tab:hover { color: var(--ink); }
+    .condition-tab.is-active { background: #fff; color: var(--blue); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+    /* ── Policy 提示卡片 ── */
+    .policy-card {
+      background: #fffbf0;
+      border: 2px solid #e4bc60;
+      border-radius: 12px;
+      padding: 14px 16px;
+      animation: policyIn 300ms ease;
+      max-width: 95%;
+      align-self: center;
+    }
+    @keyframes policyIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .policy-card-text {
+      font-size: 14px; font-weight: 700;
+      color: #704100; text-align: center;
+      margin-bottom: 10px;
+    }
+    .policy-card-buttons {
+      display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+    }
+    .policy-card-btn {
+      min-height: 34px; padding: 6px 14px;
+      border: 1.5px solid #d4a843; border-radius: 8px;
+      background: #ffffff; color: #704100;
+      font-size: 13px; font-weight: 800; cursor: pointer;
+      transition: all 120ms ease;
+    }
+    .policy-card-btn:hover { background: #704100; color: #fff; border-color: #704100; }
+    .policy-card-btn.is-active { background: #704100; color: #fff; }
+    .policy-card-btn.is-dismiss { border-color: #ccc; color: #999; }
+    .policy-card-btn.is-dismiss:hover { background: #eee; color: #666; border-color: #999; }
+
+    /* ===== Data Panel Modal (from Dashboard topology pattern) ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(23, 33, 43, 0.48);
+      z-index: 10;
+      place-items: center;
+    }
+    .modal-overlay.is-open { display: grid; }
+    .modal {
+      width: min(680px, 92vw);
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 24px 48px rgba(25, 39, 52, 0.22);
+      padding: 18px;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 16px;
+    }
+    .modal-close {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--muted);
+      font-size: 18px; font-weight: 900;
+      cursor: pointer;
+      display: grid; place-items: center;
+    }
+    .modal-close:hover { border-color: #9db0bf; }
+
+    /* EEG waveform display (from Dashboard canvas pattern) */
+    .eeg-canvas-container {
+      width: 100%;
+      height: 160px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      overflow: hidden;
+    }
+    .eeg-canvas { width: 100%; height: 100%; display: block; }
+
+    /* Rest timer pulse */
+    @keyframes timerPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+    .rest-timer.is-running { animation: timerPulse 2s infinite; }
+
+    /* Topology head map (from Dashboard) */
+    .head-map-mini {
+      position: relative;
+      width: min(100%, 180px);
+      aspect-ratio: 0.78;
+      margin: 8px auto 0;
+      border: 2px solid #cad4dc;
+      border-radius: 46% 46% 50% 50%;
+      background:
+        radial-gradient(circle at 50% 72%, rgba(35, 100, 170, 0.10), transparent 33%),
+        linear-gradient(180deg, #ffffff, #f6fafb);
+    }
+    .head-map-mini::before {
+      content: "";
+      position: absolute;
+      left: 50%; top: -10px;
+      width: 22px; height: 14px;
+      transform: translateX(-50%);
+      clip-path: polygon(50% 0, 100% 100%, 0 100%);
+      background: #cad4dc;
+    }
+    .electrode-mini {
+      position: absolute; z-index: 2;
+      display: grid; place-items: center;
+      width: 24px; height: 24px;
+      transform: translate(-50%, -50%);
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      background: var(--teal);
+      color: #ffffff;
+      font-size: 7px; font-weight: 820;
+      box-shadow: 0 2px 6px rgba(23, 33, 43, 0.18);
+    }
+    .electrode-mini.flagged {
+      background: var(--red);
+      animation: pulse 1.8s infinite;
+    }
+    .electrode-mini.warning { background: var(--amber); }
+    @keyframes pulse {
+      0% { box-shadow: 0 2px 6px rgba(23, 33, 43, 0.18), 0 0 0 4px rgba(212, 86, 69, 0.22); }
+      70% { box-shadow: 0 2px 6px rgba(23, 33, 43, 0.18), 0 0 0 10px rgba(212, 86, 69, 0.0); }
+      100% { box-shadow: 0 2px 6px rgba(23, 33, 43, 0.18), 0 0 0 4px rgba(212, 86, 69, 0.22); }
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .data-item {
+      min-height: 60px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+    .data-item .label { font-size: 11px; }
+    .data-item strong {
+      display: block; margin-top: 6px;
+      font-size: 20px; line-height: 1;
+    }
+    .data-item span {
+      color: var(--muted); font-size: 12px;
+    }
+
+    /* ===== Quiz Modal (understanding check) ===== */
+    .quiz-options {
+      display: grid; gap: 10px;
+      margin-top: 14px;
+    }
+    .quiz-option {
+      min-height: 44px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+      cursor: pointer;
+      font-size: 14px; font-weight: 800;
+      transition: border-color 120ms, background 120ms;
+    }
+    .quiz-option:hover { border-color: var(--blue); }
+    .quiz-option.is-selected {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    /* ===== Experiment Flow Pages ===== */
+    /* Intro Page */
+    .intro-page {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 18px;
+      height: 100vh;
+      overflow: hidden;
+      padding: 24px;
+      max-width: 740px;
+      margin: 0 auto;
+    }
+    .intro-card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .intro-card h2 {
+      font-size: 22px; margin: 0 0 12px;
+    }
+    .intro-card p {
+      font-size: 15px; line-height: 1.65;
+      color: var(--ink); margin: 8px 0;
+    }
+    .intro-card ul {
+      margin: 8px 0;
+      padding-left: 20px;
+      font-size: 15px; line-height: 1.6;
+    }
+    .subject-input-group {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: center;
+      margin-top: 16px;
+    }
+    .subject-input-group label {
+      color: var(--muted); font-weight: 850; font-size: 14px;
+    }
+    .subject-input {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 15px;
+    }
+    .checkbox-group {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: 20px; height: 20px;
+      accent-color: var(--blue);
+    }
+
+    /* Likert scale */
+    .likert-row {
+      display: flex; gap: 8px;
+    }
+    .likert-btn {
+      flex: 1; min-height: 52px;
+      padding: 6px 4px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      cursor: pointer;
+      font-size: 15px; font-weight: 800;
+      color: var(--ink);
+      transition: border-color 150ms, background 150ms, color 150ms;
+      display: grid; place-items: center;
+    }
+    .likert-btn small { font-weight: 600; font-size: 11px; color: var(--muted); }
+    .likert-btn:hover { border-color: var(--blue); }
+    .likert-btn.is-selected {
+      border-color: var(--blue);
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+    .likert-btn.is-selected small { color: var(--blue); }
+
+    /* Calibration Page */
+    .calibration-page {
+      display: grid;
+      place-items: center;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      position: fixed;
+      inset: 0;
+    }
+    .calibration-card {
+      text-align: center;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      width: min(480px, 90vw);
+    }
+    .fixation-cross {
+      width: 80px; height: 80px;
+      position: relative;
+    }
+    .fixation-cross::before,
+    .fixation-cross::after {
+      content: "";
+      position: absolute;
+      background: var(--ink);
+      border-radius: 4px;
+    }
+    .fixation-cross::before {
+      width: 4px; height: 80px;
+      left: 38px; top: 0;
+    }
+    .fixation-cross::after {
+      width: 80px; height: 4px;
+      left: 0; top: 38px;
+    }
+    .timer-display {
+      font-size: 48px; font-weight: 900;
+      color: var(--blue);
+      margin: 16px 0;
+    }
+    .timer-progress {
+      width: 100%; height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--teal-soft), var(--blue-soft));
+      border: 1px solid var(--line);
+      overflow: hidden;
+      margin: 12px 0;
+    }
+    .timer-fill {
+      height: 100vh;
+      background: var(--blue);
+      border-radius: 999px;
+      transition: width 100ms linear;
+    }
+    .device-status-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; margin-top: 18px;
+    }
+    .device-status {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 14px; font-weight: 850;
+    }
+    /* End Page */
+    .end-page {
+      display: grid;
+      place-items: center;
+      min-height: 600px;
+    }
+    .end-card {
+      text-align: center;
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      width: min(520px, 90vw);
+    }
+    .end-icon {
+      width: 72px; height: 72px;
+      margin: 16px auto;
+      border-radius: 999px;
+      background: var(--teal-soft);
+      border: 3px solid var(--teal);
+      display: grid; place-items: center;
+      font-size: 36px; color: var(--teal);
+    }
+    .end-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .end-stat {
+      min-height: 64px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+    .end-stat .label { font-size: 11px; }
+    .end-stat strong {
+      display: block; margin-top: 6px;
+      font-size: 24px;
+    }
+    .end-actions {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 18px;
+    }
+
+    /* ===== Event Log (from Adaptive/Game demo) ===== */
+    .event-log {
+      display: grid; gap: 8px;
+      max-height: 190px;
+      margin: 13px 0 0;
+      padding: 0;
+      overflow: auto;
+      list-style: none;
+    }
+    .event-log li {
+      border-left: 3px solid var(--line);
+      color: var(--muted);
+      padding-left: 8px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    /* ===== Toast (new) ===== */
+    .toast {
+      position: fixed;
+      top: 20px; right: 20px;
+      min-width: 220px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      font-weight: 900;
+      font-size: 14px;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 200ms, transform 200ms;
+    }
+    .toast.is-show { opacity: 1; transform: translateY(0); }
+    .toast.is-success { border-color: #9ed8cd; background: var(--teal-soft); color: #075d50; }
+    .toast.is-error { border-color: #efaaa1; background: var(--red-soft); color: #84261e; }
+    .toast.is-info { border-color: #c5ddf3; background: var(--blue-soft); color: var(--blue); }
+
+    /* ===== Researcher Setup Panel (hidden from subjects) ===== */
+    .researcher-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(23, 33, 43, 0.55);
+      z-index: 30;
+      place-items: center;
+    }
+    .researcher-overlay.is-open { display: grid; }
+    .researcher-panel {
+      width: min(540px, 92vw);
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+      box-shadow: 0 24px 48px rgba(25, 39, 52, 0.25);
+    }
+    .researcher-panel h3 {
+      margin: 0 0 18px;
+      font-size: 18px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .config-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px 10px;
+      align-items: center;
+    }
+    .config-grid label {
+      color: var(--muted); font-weight: 850; font-size: 13px;
+      white-space: nowrap;
+    }
+    .config-grid input, .config-grid select {
+      min-height: 38px;
+      border: 1px solid var(--line); border-radius: 8px;
+      padding: 0 12px; background: #ffffff; color: var(--ink);
+      font-size: 14px;
+    }
+    .config-grid select { cursor: pointer; }
+    .config-grid input:focus, .config-grid select:focus {
+      border-color: var(--blue); outline: none;
+    }
+    .config-note {
+      margin-top: 10px;
+      color: var(--muted); font-size: 12px; line-height: 1.5;
+    }
+    .config-note strong { color: var(--ink); }
+    .api-key-masked {
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+    .config-group-title {
+      display: flex; align-items: center; gap: 6px;
+      margin: 0 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 14px; font-weight: 900;
+      color: var(--ink);
+    }
+    .config-group-title .icon {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      display: grid; place-items: center;
+      font-size: 12px; font-weight: 950;
+    }
+    .icon-bci { background: var(--teal-soft); color: var(--teal); }
+    .icon-vl { background: var(--blue-soft); color: var(--blue); }
+    .setup-toggle {
+      display: grid; place-items: center;
+      width: 36px; height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      transition: border-color 120ms, background 120ms;
+    }
+    .setup-toggle:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* Fullscreen toggle button */
+    .fs-btn {
+      display: grid; place-items: center;
+      width: 36px; height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--muted);
+      font-size: 18px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 120ms, color 120ms;
+    }
+    .fs-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* ===== API Config Banner (intro page prominent entry) ===== */
+    .api-config-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      background: #f7f9fb;
+      transition: border-color 200ms, background 200ms;
+    }
+    .api-config-banner.is-configured {
+      border-color: var(--teal);
+      background: var(--teal-soft);
+    }
+    .api-config-banner-icon {
+      width: 40px; height: 40px;
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-size: 22px;
+      background: var(--blue-soft);
+      flex-shrink: 0;
+    }
+    .api-config-banner.is-configured .api-config-banner-icon {
+      background: var(--teal-soft);
+    }
+    .api-config-banner.is-configured #apiConfigStatus {
+      color: var(--teal);
+    }
+
+    /* ===== Responsive (from NeuraDock demos) ===== */
+    @media (max-width: 1180px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .api-controls { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .app-shell { padding: 12px; }
+      #mainPage.app-shell { padding: 0; }
+      h1 { font-size: 24px; }
+      h2 { font-size: 18px; }
+      .data-grid { grid-template-columns: 1fr; }
+      .end-stats { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== PAGE 1: 实验介绍页（被试视角，只看简洁说明） ===== -->
+  <div id="introPage" class="app-shell">
+    <div class="intro-page">
+      <header class="topbar">
+        <div class="identity">
+          <img src="assets/OMNI_ICON.svg" style="height:36px;width:36px;border-radius:8px;" alt="Omni Intel">
+        <div>
+          <img src="assets/OMNI_LOGO_ENG_double_line.svg" style="height:24px;object-fit:contain;" alt="Omni Intel">
+          <h1>阅读理解与认知负荷实验</h1>
+          </div>
+        </div>
+        <!-- 研究者设置按钮（小齿轮，被试不会注意到） -->
+        <button class="setup-toggle" id="setupToggleBtn" title="研究者设置 (Ctrl+Shift+S)">⚙</button>
+      </header>
+
+      <div class="intro-card">
+        <h2>实验说明</h2>
+        <p>本实验旨在研究不同难度阅读材料的认知负荷变化。实验过程中，您将阅读18篇不同领域的知识卡片，每篇阅读完成后需要回答一道理解题。</p>
+        <p><strong>实验流程：</strong></p>
+        <ul>
+          <li>静息基线校准（30秒）</li>
+          <li>18篇阅读材料 × 理解题（约30-40分钟）</li>
+          <li>实验结束 + 数据摘要</li>
+        </ul>
+        <p><strong>注意事项：</strong></p>
+        <ul>
+          <li>请保持自然阅读状态，不要刻意加快或放慢速度</li>
+          <li>阅读过程中可以与AI助手对话提问</li>
+          <li>请勿调整脑电设备位置</li>
+          <li>如感不适可随时暂停实验</li>
+        </ul>
+
+        <div class="subject-input-group">
+          <label for="subjectId">被试编号</label>
+          <input id="subjectId" type="text" class="subject-input" placeholder="请输入被试编号（必填）">
+          <label for="subjectBg">专业背景</label>
+          <input id="subjectBg" type="text" class="subject-input" placeholder="如：计算机科学 / 心理学 / 临床医学">
+        </div>
+
+        <div class="checkbox-group">
+          <input id="consentCheck" type="checkbox">
+          <label for="consentCheck">我已阅读并理解实验说明，同意参加本实验</label>
+        </div>
+      </div>
+
+      <div style="text-align:center;">
+        <button id="startExperimentBtn" class="primary" style="min-width:200px;">开始实验</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 研究者设置面板（隐藏浮层，被试不可见） ===== -->
+  <div id="researcherOverlay" class="researcher-overlay">
+    <div class="researcher-panel">
+      <h3>⚙ 研究者设置</h3>
+      <p class="config-note" style="margin:0 0 14px;">此面板仅供研究者配置实验后台参数，被试无需关注。按 <strong>Ctrl+Shift+S</strong> 或点击齿轮图标打开。</p>
+
+      <div class="config-group-title">
+        <span class="icon icon-bci">BCI</span> 脑电数据源（Recon Pipeline）
+      </div>
+      <div class="config-grid">
+        <label for="bciServer">服务器地址</label>
+        <input id="bciServer" type="url" value="http://127.0.0.1:8810" placeholder="http://127.0.0.1:8810">
+      </div>
+      <p class="config-note">
+        Recon Pipeline 默认在 8810 端口。对接：<strong>/api/health</strong> → 设备状态 | <strong>/api/state</strong> → 实时 EEG / 眼动状态
+      </p>
+
+      <div style="margin-top:18px;">
+        <div class="config-group-title">
+          <span class="icon icon-vl">VL</span> AI 视觉模型（阿里云百炼）
+        </div>
+        <div class="config-grid">
+          <label for="apiKeyInput">API Key</label>
+          <input id="apiKeyInput" type="password" class="api-key-masked" placeholder="sk-xxxxxxxx（阿里云百炼 DashScope API Key）">
+          <label for="vlModelSelect">视觉模型</label>
+          <select id="vlModelSelect">
+            <option value="qwen3.7-plus">qwen3.7-plus（文本模型）</option>
+            <option value="qwen3.7-max">qwen3.7-max（百炼 3.7，高精度）</option>
+            <option value="qwen-vl-max" selected>qwen-vl-max（视觉模型，默认）</option>
+            <option value="qwen-vl-plus">qwen-vl-plus（性价比高，速度快）</option>
+            <option value="qwen3-vl-plus">qwen3-vl-plus（带思考链推理）</option>
+            <option value="qwen2.5-vl-72b-instruct">qwen2.5-vl-72b-instruct（开源旗舰，超强OCR）</option>
+          </select>
+          <label></label>
+          <button id="testApiBtn" onclick="testApiKey()" style="min-width:100px;font-size:13px;padding:6px 12px;">测试连接</button>
+        </div>
+        <p class="config-note">
+          默认由本机 Python 后端代理读取百炼 API Key，前端可以留空。<br>
+          如需临时覆盖 Key，可在这里输入后点击「测试连接」验证。<br>
+          <span style="color:var(--red);">⚠️ 浏览器无法直接调用 DashScope（CORS限制），必须先运行 Python API 后端：</span><br>
+          <code style="background:#fff;border:1px solid var(--line);padding:2px 6px;border-radius:4px;font-size:12px;">python server.py</code>
+          &nbsp;后端默认 <code style="background:#fff;border:1px solid var(--line);padding:2px 6px;border-radius:4px;font-size:12px;">http://127.0.0.1:8800</code>
+        </p>
+      </div>
+
+      <div style="margin-top:18px;">
+        <div class="config-group-title">🔬 显示选项</div>
+        <div class="config-grid" style="align-items:center;">
+          <label for="showDiffToggle">显示难度/题域指标</label>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <input id="showDiffToggle" type="checkbox" style="width:18px;height:18px;">
+            <small style="color:var(--muted);">仅研究员可见，被试默认不显示</small>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end;">
+        <button id="setupSaveBtn" class="primary" style="min-width:100px;">保存配置</button>
+        <button id="setupCloseBtn" style="min-width:100px;">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE 2: 静息校准页（只显示十字，无文字/无倒计时） ===== -->
+  <div id="calibrationPage" class="app-shell" style="display:none;">
+    <div class="calibration-page">
+      <div class="fixation-cross" aria-hidden="true"></div>
+      <!-- 隐藏元素：JS倒计时和设备检测需要，但不显示给被试 -->
+      <div id="calTimer" style="display:none;">30</div>
+      <div id="calFill" style="display:none;"></div>
+      <div id="calEegLamp" style="display:none;"></div>
+      <span id="calEegText" style="display:none;"></span>
+      <div id="calEyeLamp" style="display:none;"></div>
+      <span id="calEyeText" style="display:none;"></span>
+    </div>
+  </div>
+
+  <!-- ===== PAGE 3: 主实验界面（只保留PPT阅读区 + AI对话区） ===== -->
+  <div id="mainPage" class="app-shell" style="display:none;">
+    <div class="screen-fiducial is-tl" data-screen-marker="10"></div>
+    <div class="screen-fiducial is-tr" data-screen-marker="11"></div>
+    <div class="screen-fiducial is-br" data-screen-marker="12"></div>
+    <div class="screen-fiducial is-bl" data-screen-marker="13"></div>
+    <!-- 隐藏元素：JS需要引用这些ID，但不显示给被试 -->
+    <div style="display:none;">
+      <span id="slideTitle"></span>
+      <span id="bciState" class="status-pill is-idle">Idle</span>
+      <span id="aiState" class="status-pill is-idle">Offline</span>
+      <button id="dataBtn" type="button">数据</button>
+      <span id="messageBanner"></span>
+      <span id="trialDisplay">1 / 18</span>
+      <span id="trialMeta">随机顺序呈现</span>
+      <span id="loadValue">--</span>
+      <span id="loadBand">Waiting</span>
+      <div id="loadCard"></div>
+      <span id="qualityLamp" class="quality-lamp is-idle"></span>
+      <strong id="qualityStatus">Waiting</strong>
+      <span id="qualityDetail">No signal yet</span>
+      <div id="diffDomainCard" style="display:none;"></div>
+      <span id="difficultyValue"><span id="difficultyChip" class="difficulty-chip is-moderate">中等</span></span>
+      <span id="domainLabel">数理统计</span>
+    </div>
+
+    <!-- Main Grid: Reading (65%) + AI Chat (35%) -->
+    <section class="main-grid">
+      <!-- Left: Reading Material -->
+      <section class="reading-panel panel" aria-label="阅读材料">
+        <div class="reading-header">
+          <div>
+            <!-- 隐藏元信息：题域、难度、试次编号不给被试看，JS仍需引用这些ID -->
+            <div class="reading-meta" style="display:none;">
+              <span id="domainTag" class="difficulty-chip is-moderate">数理统计</span>
+              <span id="diffTag" class="difficulty-chip is-moderate">中等难度</span>
+              <span id="trialIndexTag" style="color:var(--muted);font-size:12px;font-weight:900;">1 / 18</span>
+            </div>
+            <h2 id="readingTitle">正态分布与概率密度</h2>
+          </div>
+          <button id="fullscreenBtn" class="fs-btn" title="全屏模式 (双击页面也可恢复)">⛶</button>
+        </div>
+
+        <div id="readingContent" class="reading-content">
+          <p>正态分布（Normal Distribution）又称高斯分布，是统计学中最重要的连续概率分布。其概率密度函数呈钟形曲线，由均值μ和标准差σ完全确定。</p>
+
+          <div class="formula-block">
+            <span class="formula-label">概率密度函数</span>
+            f(x) = (1 / σ√2π) · exp[ -(x - μ)² / 2σ² ]
+          </div>
+
+          <h3>核心性质</h3>
+          <p>正态分布具有以下重要性质：曲线关于μ对称；约68%的数据落在μ±σ范围内，约95%落在μ±2σ范围内，约99.7%落在μ±3σ范围内——这就是著名的<strong>68-95-99.7规则</strong>。</p>
+
+          <div class="chart-placeholder">
+            📊 正态分布钟形曲线图<br>
+            <span style="font-size:12px;">μ=0, σ=1 标准正态分布</span>
+          </div>
+
+          <h3>标准正态分布</h3>
+          <p>当μ=0、σ=1时，称为标准正态分布（Z分布）。任意正态分布可通过Z变换标准化：</p>
+
+          <div class="formula-block">
+            <span class="formula-label">Z变换</span>
+            Z = (X - μ) / σ
+          </div>
+
+          <table class="data-table">
+            <tr><th>范围</th><th>概率</th><th>含义</th></tr>
+            <tr><td>μ ± 1σ</td><td>68.27%</td><td>约2/3数据在此范围</td></tr>
+            <tr><td>μ ± 2σ</td><td>95.45%</td><td>绝大多数数据</td></tr>
+            <tr><td>μ ± 3σ</td><td>99.73%</td><td>几乎全部数据</td></tr>
+          </table>
+        </div>
+
+        <!-- Bottom Controls：只保留下一题 -->
+        <div class="bottom-controls" style="justify-content:flex-end;">
+          <button id="nextBtn" class="primary">下一题 ▶</button>
+        </div>
+      </section>
+
+      <!-- Right: AI Chat Panel -->
+      <aside class="chat-panel panel" aria-label="对话区">
+        <div class="chat-header">
+          <div class="chat-avatar-mini" style="background:var(--blue);">AI</div>
+          <div class="chat-header-info">
+            <div class="chat-header-title">AI 阅读助手</div>
+            <div id="aiStatus" class="chat-header-status">在线</div>
+          </div>
+        </div>
+
+        <div id="chatMessages" class="chat-messages">
+          <div class="typing-indicator" style="display:none;"><span class="typing-spinner"></span><span>AI 正在组织回答</span></div>
+        </div>
+
+        <!-- 人工对话解释档位：只选择难度，不直接发送 -->
+        <div class="explain-buttons" id="explainButtons" style="display:none;">
+          <button class="explain-btn" data-level="简单解释" onclick="selectExplainLevel('简单解释', this)">简单解释</button>
+          <button class="explain-btn" data-level="举例子" onclick="selectExplainLevel('举例子', this)">举例子</button>
+          <button class="explain-btn" data-level="详细解释" onclick="selectExplainLevel('详细解释', this)">详细解释</button>
+        </div>
+
+        <div class="chat-input-area" id="chatInputArea">
+          <textarea id="chatInput" class="chat-input" placeholder="选中题目文字复制后，在此处粘贴..." rows="1"></textarea>
+          <button id="sendBtn" class="send-btn" disabled>发送</button>
+        </div>
+      </aside>
+    </section>
+  </div>
+
+  <!-- ===== PAGE 4: 结束页 ===== -->
+  <div id="endPage" class="app-shell" style="display:none;">
+    <div class="end-page">
+      <div class="end-card panel">
+        <div class="end-icon">✓</div>
+        <h2 style="margin:0;">实验已完成</h2>
+        <p style="color:var(--muted);font-size:14px;margin-top:8px;">感谢您参与本次认知负荷实验！</p>
+
+        <div class="end-stats" id="endStats">
+          <div class="end-stat">
+            <span class="label">完成试次</span>
+            <strong id="endTrialCount">0 / 18</strong>
+          </div>
+          <div class="end-stat">
+            <span class="label">正确率</span>
+            <strong id="endAccuracy" style="color:var(--teal);">--%</strong>
+          </div>
+          <div class="end-stat">
+            <span class="label">总用时</span>
+            <strong id="endTime">--:--</strong>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--line);padding-top:14px;margin-top:8px;">
+          <span class="label">认知负荷摘要</span>
+          <p style="margin:8px 0 0;color:var(--muted);font-size:14px;">请完成问卷后结束。</p>
+        </div>
+
+        <div class="end-actions">
+          <button class="primary" onclick="openQuestionnaire()">📝 去问卷</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE 5: 问卷页 ===== -->
+  <div id="questionnairePage" class="app-shell" style="display:none;">
+    <div class="intro-page">
+      <header class="topbar">
+        <div class="identity">
+          <img src="assets/OMNI_ICON.svg" style="height:36px;width:36px;border-radius:8px;" alt="Omni Intel">
+          <div>
+            <img src="assets/OMNI_LOGO_ENG_double_line.svg" style="height:24px;object-fit:contain;" alt="Omni Intel">
+            <h1>实验问卷</h1>
+          </div>
+        </div>
+      </header>
+
+      <div class="intro-card">
+        <h2>实验反馈问卷</h2>
+        <p style="color:var(--muted);margin:0 0 18px;">请根据你的真实感受回答以下问题</p>
+
+        <!-- Q1: 认知负荷 -->
+        <div style="margin-bottom:20px;">
+          <label style="font-weight:850;font-size:15px;display:block;margin-bottom:8px;">1. 阅读过程中，你感觉大脑的负担如何？</label>
+          <div class="likert-row" id="loadRating">
+            <button class="likert-btn" onclick="rateLikert(this,'loadRating')">1<br><small>很轻松</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'loadRating')">2<br><small>较轻松</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'loadRating')">3<br><small>适中</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'loadRating')">4<br><small>较吃力</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'loadRating')">5<br><small>非常吃力</small></button>
+          </div>
+        </div>
+
+        <!-- Q2: 难度感知 -->
+        <div style="margin-bottom:20px;">
+          <label style="font-weight:850;font-size:15px;display:block;margin-bottom:8px;">2. 总体来看，阅读材料的难度对你来说？</label>
+          <div class="likert-row" id="diffRating">
+            <button class="likert-btn" onclick="rateLikert(this,'diffRating')">1<br><small>太简单</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'diffRating')">2<br><small>偏简单</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'diffRating')">3<br><small>适中</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'diffRating')">4<br><small>偏难</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'diffRating')">5<br><small>太难</small></button>
+          </div>
+        </div>
+
+        <!-- Q3: AI助手评价 -->
+        <div style="margin-bottom:20px;">
+          <label style="font-weight:850;font-size:15px;display:block;margin-bottom:8px;">3. AI 阅读助手对你的帮助有多大？</label>
+          <div class="likert-row" id="aiRating">
+            <button class="likert-btn" onclick="rateLikert(this,'aiRating')">1<br><small>没帮助</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'aiRating')">2<br><small>帮助不大</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'aiRating')">3<br><small>一般</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'aiRating')">4<br><small>有帮助</small></button>
+            <button class="likert-btn" onclick="rateLikert(this,'aiRating')">5<br><small>非常有帮助</small></button>
+          </div>
+        </div>
+
+        <!-- Q4: 开放反馈 -->
+        <div class="subject-input-group" style="margin-bottom:20px;">
+          <label for="qFeedback" style="font-weight:850;font-size:15px;">4. 其他想说的（选填）</label>
+          <textarea id="qFeedback" class="subject-input" style="min-height:80px;resize:vertical;" placeholder="任何感受、建议或遇到的问题..."></textarea>
+        </div>
+      </div>
+
+      <div style="text-align:center;">
+        <button id="finishQuestionnaireBtn" class="primary" style="min-width:200px;">提交并结束实验</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: 理解题 ===== -->
+  <div id="quizModal" class="modal-overlay" style="background:rgba(23,33,43,0.95);">
+    <div class="modal" style="width:100vw;height:100vh;max-width:100vw;max-height:100vh;border-radius:0;box-shadow:none;display:flex;flex-direction:column;justify-content:center;padding:40px 80px;">
+      <div style="width:min(900px,100%);margin:0 auto;">
+      <div class="modal-header" style="border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:24px;">
+        <div>
+          <div class="label">理解题</div>
+          <h2>请选择正确答案</h2>
+        </div>
+      </div>
+      <div class="quiz-body" style="font-size:16px;line-height:1.8;">
+        <!-- JS动态填充2道题 -->
+      </div>
+      <div style="margin-top:24px;text-align:right;">
+        <button id="quizSubmitBtn" class="primary" disabled>确认提交</button>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: 数据面板 ===== -->
+  <div id="dataModal" class="modal-overlay">
+    <div class="modal" style="width:min(780px,92vw);">
+      <div class="modal-header">
+        <div>
+          <div class="label">实时数据</div>
+          <h2>EEG / 认知负荷面板</h2>
+        </div>
+        <button class="modal-close" onclick="closeModal('dataModal')">✕</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <!-- EEG Waveform (from Dashboard canvas pattern) -->
+        <div>
+          <span class="label">EEG 实时波形</span>
+          <div class="eeg-canvas-container" style="margin-top:8px;">
+            <canvas id="eegCanvas" class="eeg-canvas" width="600" height="160"></canvas>
+          </div>
+        </div>
+
+        <!-- Head topology (from Dashboard pattern) -->
+        <div>
+          <span class="label">主解码器通道（后部 Alpha）</span>
+          <div class="head-map-mini" style="margin-top:8px;">
+            <span class="electrode-mini" style="left:25%;top:50%;">P3</span>
+            <span class="electrode-mini" style="left:75%;top:50%;">P4</span>
+            <span class="electrode-mini" style="left:18%;top:66%;">P7</span>
+            <span class="electrode-mini" style="left:82%;top:66%;">P8</span>
+            <span class="electrode-mini" style="left:50%;top:64%;">PZ</span>
+            <span class="electrode-mini" style="left:35%;top:82%;">O1</span>
+            <span class="electrode-mini" style="left:65%;top:82%;">O2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-grid">
+        <div class="data-item">
+          <span class="label">认知负荷指数</span>
+          <strong id="modalLoad" style="color:var(--amber);">52</strong>
+          <span>Moderate</span>
+        </div>
+        <div class="data-item">
+          <span class="label">Alpha 功率</span>
+          <strong>10.2 Hz</strong>
+          <span>后枕峰值频率</span>
+        </div>
+        <div class="data-item">
+          <span class="label">信号质量</span>
+          <strong style="color:var(--amber);">Warning</strong>
+          <span>以实时质量门控为准</span>
+        </div>
+        <div class="data-item">
+          <span class="label">眼动注视</span>
+          <strong>阅读区</strong>
+          <span>注视点集中在左侧文本区</span>
+        </div>
+      </div>
+
+      <!-- Load Timeline (from Game demo chart pattern) -->
+      <div style="margin-top:14px;">
+        <div class="label">负荷趋势</div>
+        <div class="eeg-canvas-container">
+          <canvas id="loadTimelineCanvas" class="eeg-canvas" width="700" height="190"></canvas>
+        </div>
+      </div>
+
+      <!-- ★ 数据存储状态面板 -->
+      <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:12px;">
+        <div class="label">数据存储状态</div>
+        <div class="data-grid" style="margin-top:8px;">
+          <div class="data-item">
+            <span class="label">试次记录</span>
+            <strong id="dataTrialCount">0</strong>
+            <span>/ 18 已完成</span>
+          </div>
+          <div class="data-item">
+            <span class="label">负荷采样总量</span>
+            <strong id="dataLoadSamples">0</strong>
+            <span>个数据点</span>
+          </div>
+          <div class="data-item">
+            <span class="label">对话记录</span>
+            <strong id="dataChatCount">0</strong>
+            <span>条消息</span>
+          </div>
+          <div class="data-item">
+            <span class="label">localStorage</span>
+            <strong id="dataStorageStatus">--</strong>
+            <span id="dataStorageSize">-- KB</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:10px;justify-content:flex-end;">
+          <button class="primary" onclick="exportExperimentData();closeModal('dataModal')">💾 导出 JSON</button>
+          <button onclick="saveToLocalStorage();updateDataPanelStatus();showToast('success','已暂存')">📌 手动暂存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: 暂停 ===== -->
+  <div id="pauseModal" class="modal-overlay">
+    <div class="modal" style="width:min(420px,92vw);">
+      <div class="modal-header">
+        <h2>实验暂停</h2>
+        <button class="modal-close" onclick="closeModal('pauseModal')">✕</button>
+      </div>
+      <p style="font-size:15px;line-height:1.6;color:var(--muted);">实验已暂停。您可以选择继续或退出。</p>
+      <div style="display:flex;gap:12px;margin-top:18px;justify-content:center;">
+        <button class="primary" onclick="closeModal('pauseModal');showToast('success','实验继续')">▶ 继续实验</button>
+        <button onclick="exitExperiment()">⏹ 退出实验</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Rest Modal ===== -->
+  <div id="restModal" class="modal-overlay">
+    <div class="modal" style="width:min(440px,92vw);text-align:center;">
+      <div class="modal-header" style="justify-content:center;">
+        <h2>☕ 阶段性休息</h2>
+      </div>
+      <p id="restMessage" style="font-size:15px;line-height:1.6;color:var(--ink);margin:16px 0;">已完成本阶段题目，请稍作休息。</p>
+      <div class="rest-timer" id="restTimer" style="font-size:64px;font-weight:900;color:var(--blue);margin:20px 0;font-variant-numeric:tabular-nums;">5:00</div>
+      <p style="color:var(--muted);font-size:13px;">休息结束后将自动进入下一阶段</p>
+      <div style="display:flex;gap:12px;margin-top:18px;justify-content:center;">
+        <button id="restSkipBtn" class="primary" style="min-width:120px;">提前继续</button>
+        <button onclick="exitExperiment()" style="min-width:100px;">退出实验</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Condition 间问卷 ===== -->
+  <div id="condQModal" class="modal-overlay">
+    <div class="modal" style="width:min(460px,92vw);">
+      <div class="modal-header">
+        <h2 id="condQTitle">阶段反馈</h2>
+      </div>
+      <p id="condQDesc" style="font-size:14px;color:var(--muted);margin:0 0 16px;"></p>
+      <div id="condQBody"></div>
+      <div style="margin-top:16px;text-align:right;">
+        <button id="condQSubmitBtn" class="primary" disabled>确认提交</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div id="toast" class="toast"></div>
+
+  <!-- ===== Question Bank ===== -->
+  <script src="question_bank/easy/question_01.js"></script>
+  <script src="question_bank/easy/question_02.js"></script>
+  <script src="question_bank/easy/question_03.js"></script>
+  <script src="question_bank/easy/question_04.js"></script>
+  <script src="question_bank/easy/question_05.js"></script>
+  <script src="question_bank/easy/question_06.js"></script>
+  <script src="question_bank/easy/question_07.js"></script>
+  <script src="question_bank/easy/question_08.js"></script>
+  <script src="question_bank/easy/question_09.js"></script>
+  <script src="question_bank/easy/question_10.js"></script>
+  <script src="question_bank/easy/question_11.js"></script>
+  <script src="question_bank/easy/question_12.js"></script>
+  <script src="question_bank/easy/question_13.js"></script>
+  <script src="question_bank/easy/question_14.js"></script>
+  <script src="question_bank/easy/question_15.js"></script>
+  <script src="question_bank/easy/question_16.js"></script>
+  <script src="question_bank/medium/question_17.js"></script>
+  <script src="question_bank/medium/question_18.js"></script>
+  <script src="question_bank/medium/question_19.js"></script>
+  <script src="question_bank/medium/question_20.js"></script>
+  <script src="question_bank/medium/question_21.js"></script>
+  <script src="question_bank/medium/question_22.js"></script>
+  <script src="question_bank/medium/question_23.js"></script>
+  <script src="question_bank/medium/question_24.js"></script>
+  <script src="question_bank/medium/question_25.js"></script>
+  <script src="question_bank/medium/question_26.js"></script>
+  <script src="question_bank/medium/question_27.js"></script>
+  <script src="question_bank/medium/question_28.js"></script>
+  <script src="question_bank/medium/question_29.js"></script>
+  <script src="question_bank/medium/question_30.js"></script>
+  <script src="question_bank/medium/question_31.js"></script>
+  <script src="question_bank/medium/question_32.js"></script>
+  <script src="question_bank/hard/question_33.js"></script>
+  <script src="question_bank/hard/question_34.js"></script>
+  <script src="question_bank/hard/question_35.js"></script>
+  <script src="question_bank/hard/question_36.js"></script>
+  <script src="question_bank/hard/question_37.js"></script>
+  <script src="question_bank/hard/question_38.js"></script>
+  <script src="question_bank/hard/question_39.js"></script>
+  <script src="question_bank/hard/question_40.js"></script>
+  <script src="question_bank/hard/question_41.js"></script>
+  <script src="question_bank/hard/question_42.js"></script>
+  <script src="question_bank/hard/question_43.js"></script>
+  <script src="question_bank/hard/question_44.js"></script>
+  <script src="question_bank/hard/question_45.js"></script>
+  <script src="question_bank/hard/question_46.js"></script>
+  <script src="question_bank/hard/question_47.js"></script>
+  <script src="question_bank/hard/question_48.js"></script>
+  <script src="question_bank/index.js"></script>
+
+  <!-- ===== JavaScript ===== -->
+  <script>
+    /* ===== Configuration ===== */
+    const _serverBase = window.location.origin;
+    const config = {
+      bciServer: _serverBase,
+      apiKey: "",  // 默认由 server.py 后端代理读取 DASHSCOPE_API_KEY / 内置百炼 Key
+      vlModel: "qwen-vl-max",  // 支持场景帧的百炼多模态模型
+      vlApiUrl: `${_serverBase}/v1/chat/completions`, // 自动适配当前访问 IP
+      gazeFrameUrl: `${_serverBase}/api/gaze/frame`,
+      screenLayoutUrl: `${_serverBase}/api/screen/layout`,
+      vlApiUrlDirect: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", // 直连（浏览器CORS阻止，不可用）
+      dataCollectorUrl: `${_serverBase}/api/collect`,
+      policyUrl: `${_serverBase}/api/policy`,
+      conditionUrl: `${_serverBase}/api/condition`,
+    };
+
+    // 演示模式：true=本地预设回答(无需后端) / false=真实 AI 对话(需先启动代理)
+    const DEMO_AI_MODE = false;
+
+    const state = {
+      pollTimer: null,
+      load: null,
+      quality: "waiting",
+      mode: "standard",
+      history: [],
+      currentPage: "intro",
+      bciConnected: false,
+      aiConnected: false,
+      condition: 1,          // 1=纯AI, 2=AI+眼动, 3=AI+眼动+EEG
+      lastExplainLevel: null, // 最近一次解释档位
+      inQuiz: false,
+      aiBusy: false,
+    };
+
+    /* ================================================================
+       ★ 实验数据存储中心 — experimentData
+       所有检测数据、时间戳、时长都记录在此对象中
+       结构: meta(元信息) + calibration(校准基线) + trials(逐试次) + summary(汇总)
+       持久化: localStorage 自动暂存(每15秒) + 结束时JSON导出
+       ================================================================ */
+    const experimentData = {
+      // --- 元信息 ---
+      meta: {
+        subjectId: "",
+        background: "",              // 专业背景
+        experimentStartTime: null,    // ISO timestamp (ms)
+        experimentEndTime: null,
+        startISO: null,               // ISO timestamp string
+        endISO: null,
+        totalDurationSec: null,
+        bciServer: "",
+        vlModel: "",
+        trialOrder: [],               // 随机化后的试次顺序
+        conditionOrder: [],           // 三个 6 题区块分别对应的 Condition
+        appVersion: "cogload-v1.0",
+      },
+
+      // --- 校准基线数据 ---
+      calibration: {
+        startTime: null,
+        endTime: null,
+        startISO: null,               // ISO timestamp string
+        endISO: null,
+        durationSec: null,
+        baselineLoadAvg: null,        // 校准30秒内平均负荷
+        baselineLoadStd: null,        // 标准差
+        loadSamples: [],              // [{ value, quality, timestamp }]
+        eegConnected: false,
+        eyeTrackerConnected: false,
+      },
+
+      // --- 逐试次数据 (核心) ---
+      trials: [],                     // 每个元素结构见 createTrialRecord()
+
+      // --- 全局汇总 (结束时计算) ---
+      summary: {
+        totalTrials: 0,
+        totalCorrect: 0,
+        accuracy: null,
+        avgLoadByDifficulty: { low: null, moderate: null, high: null },
+        avgResponseTimeByDifficulty: { low: null, moderate: null, high: null },
+        totalChatMessages: 0,
+        totalLoadSamples: 0,
+      },
+    };
+
+    // 创建单试次数据模板
+    function createTrialRecord(trialIndex, slide) {
+      return {
+        // 试次基本信息
+        trialIndex,                   // 0-17
+        slideId: slide.id,
+        title: slide.title,
+        domain: slide.domain,
+        difficulty: slide.difficulty,
+        condition: state.condition,
+
+        // 时间记录
+        startTime: Date.now(),        // ms timestamp
+        startISO: new Date().toISOString(),
+        endTime: null,
+        durationSec: null,            // 阅读到提交quiz的总时长
+
+        // 认知负荷采样 (每1.5秒一条)
+        loadSamples: [],              // [{ value, quality, timestamp, elapsedMs }]
+        loadAvg: null,                // 本试次平均负荷 (结束时算)
+        loadMax: null,
+        loadMin: null,
+        loadStd: null,
+
+        // 理解题数据（每题2小题）
+        quiz: {
+          results: [],                // [{ question, selectedIndex, correctIndex, isCorrect }]
+          correctCount: null,
+          isCorrect: null,
+          quizOpenTime: null,
+          quizSubmitTime: null,
+          responseTimeSec: null,
+        },
+
+        // AI对话记录 (本试次期间)
+        chatMessages: [],             // [{ role, content, timestamp }]
+        chatCount: 0,
+
+        // EEG信号质量记录
+        signalQuality: [],            // [{ quality, timestamp }]
+      };
+    }
+
+    // 获取当前试次记录
+    function currentTrialRecord() {
+      return experimentData.trials[experimentData.trials.length - 1] || null;
+    }
+
+    const $ = (id) => document.getElementById(id);
+
+    /* ===== Page Navigation ===== */
+    function navigateTo(page) {
+      const pages = { intro: "introPage", calibration: "calibrationPage", main: "mainPage", end: "endPage", questionnaire: "questionnairePage" };
+      Object.values(pages).forEach(id => $(id).style.display = "none");
+      $(pages[page]).style.display = "";
+      state.currentPage = page;
+      if (page === "main") setTimeout(syncScreenLayout, 100);
+    }
+
+    /* ===== Exit Experiment (from pause modal) ===== */
+    function exitExperiment() {
+      clearInterval(state.pollTimer);
+      clearInterval(experimentTimerInterval);
+      closeModal("pauseModal");
+      navigateTo("end");
+    }
+
+    /* ===== Experiment Reset (for re-entering after completion) ===== */
+    function resetExperiment() {
+      // Stop all timers
+      clearInterval(state.pollTimer);
+      clearInterval(calInterval);
+      clearInterval(experimentTimerInterval);
+      state.pollTimer = null;
+      calInterval = null;
+      experimentTimerInterval = null;
+
+      // Reset state
+      state.load = null;
+      state.quality = "waiting";
+      state.history = [];
+      state.bciConnected = false;
+      state.aiConnected = false;
+
+      // Reset statistics
+      quizResults.length = 0;
+      experimentStartTime = null;
+
+      // Re-randomize trial order and condition order
+      trialOrder = buildBalancedTrialOrder();
+      conditionOrder = generateConditionOrder();
+      state.condition = conditionOrder[0];
+      $("explainButtons").style.display = "flex";
+      $("chatInputArea").style.display = "grid";
+      currentTrial = 0;
+
+      // Clear chat
+      chatHistory.length = 0;
+      apiContext.length = 0;
+      $("chatMessages").innerHTML = `<div class="chat-msg is-ai">你好！你可以随时向我提问关于当前阅读材料的问题。<div class="chat-msg-actions"><button class="feedback-btn" onclick="showToast('success','反馈已记录')">👍</button><button class="feedback-btn" onclick="showToast('info','反馈已记录')">👎</button></div></div><div class="typing-indicator" style="display:none;"><span class="typing-spinner"></span><span>AI 正在组织回答</span></div>`;
+      $("chatInput").value = "";
+
+      // Reset HUD displays
+      $("loadValue").textContent = "--";
+      $("loadBand").textContent = "Waiting";
+      $("loadCard").className = "metric-card";
+      $("qualityLamp").className = "quality-lamp is-idle";
+      $("qualityStatus").textContent = "Waiting";
+      $("qualityDetail").textContent = "No signal yet";
+      $("bciState").className = "status-pill is-idle";
+      $("bciState").textContent = "Idle";
+      $("aiState").className = "status-pill is-idle";
+      $("aiState").textContent = "Offline";
+      $("messageBanner").className = "message-banner is-hidden";
+
+      // Navigate to intro page
+      navigateTo("intro");
+      validateStart();
+
+      showToast("info", "实验已重置，请重新开始");
+    }
+
+    /* ===== Intro Page Logic ===== */
+    const subjectInput = $("subjectId");
+    const consentCheck = $("consentCheck");
+    const startBtn = $("startExperimentBtn");
+
+    function validateStart() {
+      const hasId = subjectInput.value.trim().length > 0;
+      const hasConsent = consentCheck.checked;
+      startBtn.disabled = !(hasId && hasConsent);
+    }
+    subjectInput.addEventListener("input", validateStart);
+    consentCheck.addEventListener("change", validateStart);
+
+    startBtn.addEventListener("click", async () => {
+      if (!startBtn.disabled) {
+        // Config is already saved by researcher via the setup panel
+        // (If researcher hasn't opened the panel, defaults apply)
+        if (!config.bciServer) {
+          config.bciServer = $("bciServer").value.trim().replace(/\/$/, "");
+        }
+        if (!config.apiKey) {
+          config.apiKey = $("apiKeyInput").value.trim();
+        }
+        if (!config.vlModel) {
+          config.vlModel = $("vlModelSelect").value;
+        }
+        console.log("Experiment starting with config:", { bci: config.bciServer || "(未配置，将不轮询)", ai: config.apiKey ? `${config.apiKey.slice(0,8)}...` : "(未配置，将用fallback)", model: config.vlModel });
+        const subjectId = subjectInput.value.trim();
+        state.condition = conditionOrder[0];
+        await startPipelineSession(subjectId, state.condition);
+        await syncPipelineUIContext("calibration");
+        // 自动进入全屏（替代 F11）
+        try { document.documentElement.requestFullscreen(); } catch (_) {}
+        navigateTo("calibration");
+        startCalibration();
+        startDataPolling();
+      }
+    });
+
+    /* ===== Calibration Logic ===== */
+    let calInterval = null;
+    let finishCalibration = null;
+    function startCalibration() {
+      // Clear any lingering timer from previous run
+      if (calInterval) clearInterval(calInterval);
+      if (state.pollTimer) clearInterval(state.pollTimer);
+
+      // ★ 记录校准开始
+      experimentData.calibration.startTime = Date.now();
+      experimentData.calibration.startISO = new Date().toISOString();
+      experimentData.calibration.loadSamples = [];
+
+      // Detect real device connection status via /api/health
+      checkCalDeviceStatus();
+
+      const calibrationSeconds = 15;
+      let remaining = calibrationSeconds;
+      $("calTimer").textContent = remaining;
+      $("calFill").style.width = "0%";
+
+      finishCalibration = async function() {
+        clearInterval(calInterval);
+        calInterval = null;
+
+        experimentData.calibration.endTime = Date.now();
+        experimentData.calibration.endISO = new Date().toISOString();
+        experimentData.calibration.durationSec =
+          (experimentData.calibration.endTime - experimentData.calibration.startTime) / 1000;
+        const calLoads = experimentData.calibration.loadSamples.map(s => s.value);
+        if (calLoads.length > 0) {
+          const calMean = calLoads.reduce((a,b)=>a+b,0) / calLoads.length;
+          experimentData.calibration.baselineLoadAvg = Math.round(calMean);
+          experimentData.calibration.baselineLoadStd = Math.round(Math.sqrt(calLoads.reduce((s,v)=>s+(v-calMean)**2,0)/calLoads.length));
+        }
+        experimentData.calibration.eegConnected = state.bciConnected;
+        experimentData.calibration.eyeTrackerConnected = state.bciConnected;
+
+        experimentData.meta.subjectId = $("subjectId")?.value || "unknown";
+        experimentData.meta.background = $("subjectBg")?.value || "";
+        experimentData.meta.experimentStartTime = Date.now();
+        experimentData.meta.startISO = new Date().toISOString();
+        experimentData.meta.bciServer = config.bciServer;
+        experimentData.meta.vlModel = config.vlModel;
+        experimentData.meta.trialOrder = [...trialOrder];
+        experimentData.meta.conditionOrder = [...conditionOrder];
+
+        // 同步 Condition 顺序 + UI
+        state.condition = conditionOrder[0];
+        $("explainButtons").style.display = "flex";
+        $("chatInputArea").style.display = "grid";
+        document.querySelectorAll(".explain-btn").forEach(b => b.classList.remove("is-active"));
+
+        navigateTo("main");
+        currentTrial = 0;
+        loadTrial(0);
+        startDataPolling();
+        updateAiStatus();
+        startExperimentTimer();
+        startAutoSave();
+        showToast("success", "校准完成，实验开始");
+      }
+
+      calInterval = setInterval(() => {
+        remaining -= 1;
+        $("calTimer").textContent = remaining;
+        $("calFill").style.width =
+          ((calibrationSeconds - remaining) / calibrationSeconds * 100) + "%";
+        if (remaining <= 0) {
+          finishCalibration();
+        }
+      }, 1000);
+    }
+
+    /* ===== Recon Pipeline data connection ===== */
+    function setBciStatus(kind, label) {
+      $("bciState").className = `status-pill is-${kind}`;
+      $("bciState").textContent = label;
+      state.bciConnected = kind === "live";
+    }
+
+    function setAiStatus(kind, label) {
+      $("aiState").className = `status-pill is-${kind}`;
+      $("aiState").textContent = label;
+      state.aiConnected = kind === "live";
+    }
+
+    /* ===== Check Device Status for Calibration Page ===== */
+    async function checkCalDeviceStatus() {
+      const eegLamp = $("calEegLamp");
+      const eegText = $("calEegText");
+      const eyeLamp = $("calEyeLamp");
+      const eyeText = $("calEyeText");
+
+      if (!config.bciServer) {
+        // No server configured → show warning state
+        eegLamp.className = "quality-lamp is-warning";
+        eegText.textContent = "脑电 ⚠️ 未配置";
+        eyeLamp.className = "quality-lamp is-warning";
+        eyeText.textContent = "眼动 ⚠️ 未配置";
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${config.bciServer}/api/health`, { cache: "no-store" });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+
+        // Refactored pipeline reports both modalities independently.
+        const eegOk = data.eeg_connected === true;
+        const eyeOk = data.gaze_connected === true || data.eyetracker_connected === true;
+
+        eegLamp.className = `quality-lamp is-${eegOk ? "pass" : "warning"}`;
+        eegText.textContent = eegOk ? "脑电 ✅ 已连接" : "脑电 ⚠️ 未连接";
+        eyeLamp.className = `quality-lamp is-${eyeOk ? "pass" : "warning"}`;
+        eyeText.textContent = eyeOk ? "眼动 ✅ 已连接" : "眼动 ⚠️ 未连接";
+
+        // Also update main page BCI status
+        setBciStatus(eegOk ? "live" : "error", eegOk ? "Live" : "Offline");
+      } catch (err) {
+        // Cannot reach Recon Pipeline → both devices show offline
+        eegLamp.className = "quality-lamp is-warning";
+        eegText.textContent = "脑电 ❌ 离线";
+        eyeLamp.className = "quality-lamp is-warning";
+        eyeText.textContent = "眼动 ❌ 离线";
+        setBciStatus("error", "Offline");
+      }
+    }
+
+    async function pollHealth() {
+      if (!config.bciServer) { setBciStatus("idle", "Not Set"); return; }
+      try {
+        const resp = await fetch(`${config.bciServer}/api/health`, { cache: "no-store" });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        setBciStatus("live", "Live");
+        const quality = data.eeg_quality || "unavailable";
+        $("qualityLamp").className = `quality-lamp is-${quality === "pass" ? "pass" : "warning"}`;
+        $("qualityStatus").textContent = quality === "pass" ? "Pass" : "Warning";
+        $("qualityDetail").textContent = data.message || `EEG: ${quality}`;
+      } catch (err) {
+        setBciStatus("error", "Offline");
+        $("qualityLamp").className = "quality-lamp is-warning";
+        $("qualityStatus").textContent = "Warning";
+        $("qualityDetail").textContent = "Recon Pipeline 服务未连接";
+      }
+    }
+
+    async function pollAttention() {
+      if (!config.bciServer || !state.bciConnected) return;
+      try {
+        const resp = await fetch(`${config.bciServer}/api/attention`, { cache: "no-store" });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const load = data.attention_score ?? data.visual_load_index ?? data.score ?? null;
+        const quality = data.quality_status || "pass";
+        if (load != null) {
+          const [band, bandLabel] = loadBand(load);
+          state.load = load; state.quality = quality;
+          $("loadCard").className = `metric-card is-${band}`;
+          $("loadValue").textContent = Math.round(load);
+          $("loadBand").textContent = bandLabel;
+          $("qualityLamp").className = `quality-lamp is-${quality === "pass" ? "pass" : "warning"}`;
+          $("qualityDetail").textContent = quality === "pass" ? "Signal accepted" : "Signal quality warning";
+          state.history.push({ load, quality, time: Date.now() });
+          state.history = state.history.slice(-160);
+          updateBanner(band, quality);
+          // Track load by difficulty for end page summary
+          recordLoadByDifficulty(load);
+
+          // ★ 存入当前试次的负荷采样
+          const trial = currentTrialRecord();
+          if (trial && trial.loadSamples) {
+            const elapsedMs = Date.now() - trial.startTime;
+            trial.loadSamples.push({ value: load, quality, timestamp: Date.now(), elapsedMs });
+            trial.signalQuality.push({ quality, timestamp: Date.now() });
+          }
+
+          // ★ 如果在校准阶段，也存入校准数据
+          if (state.currentPage === "calibration") {
+            experimentData.calibration.loadSamples.push({ value: load, quality, timestamp: Date.now() });
+          }
+        }
+      } catch (err) { console.warn("Attention poll failed:", err.message); }
+    }
+
+    function startDataPolling() {
+      clearInterval(state.pollTimer);
+      pollHealth();
+      syncScreenLayout();
+      state.pollTimer = setInterval(() => {
+        pollHealth(); pollAttention(); pollPolicy(); syncScreenLayout();
+      }, 1500);
+    }
+
+    async function syncScreenLayout() {
+      if (state.currentPage !== "main" || state.inQuiz) return;
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+      const markers = [...document.querySelectorAll("[data-screen-marker]")].map(element => {
+        const rect = element.getBoundingClientRect();
+        return {
+          id: Number(element.dataset.screenMarker),
+          x_normalized: (rect.left + rect.width / 2) / viewport.width,
+          y_normalized: (rect.top + rect.height / 2) / viewport.height,
+        };
+      });
+      if (markers.length !== 4 || markers.some(marker => !Number.isFinite(marker.x_normalized))) return;
+      const candidates = [
+        $("readingTitle"),
+        ...$("readingContent").querySelectorAll("h1,h2,h3,p,li,.formula-block,.data-table,table,tr"),
+      ];
+      const slide = currentTrial < trialOrder.length ? slides[trialOrder[currentTrial]] : null;
+      const elements = candidates.flatMap((element, index) => {
+        const rect = element?.getBoundingClientRect();
+        if (!rect || rect.width < 2 || rect.height < 2 || rect.bottom <= 0 || rect.top >= viewport.height) return [];
+        const xMin = Math.max(0, rect.left) / viewport.width;
+        const yMin = Math.max(0, rect.top) / viewport.height;
+        const xMax = Math.min(viewport.width, rect.right) / viewport.width;
+        const yMax = Math.min(viewport.height, rect.bottom) / viewport.height;
+        if (xMin >= xMax || yMin >= yMax) return [];
+        return [{
+          id: `slide-${slide?.id ?? "unknown"}-content-${index}`,
+          tag: element.id || element.className || element.tagName.toLowerCase(),
+          text: element.textContent.trim().replace(/\s+/g, " ").slice(0, 240),
+          x_min: xMin, y_min: yMin, x_max: xMax, y_max: yMax,
+        }];
+      });
+      try {
+        await fetch(config.screenLayoutUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            page: "experiment",
+            viewport,
+            markers,
+            elements,
+            trial_id: `T${String(currentTrial + 1).padStart(2, "0")}`,
+            slide_id: slide ? String(slide.id) : null,
+          }),
+        });
+      } catch (_) {}
+    }
+
+    /* ===== Policy Polling (星妍端 → 前端自动触发) ===== */
+    let lastPolicyLevel = "none";
+    let lastPolicyTriggerTime = 0;
+    async function pollPolicy() {
+      if (state.condition < 2 || state.inQuiz) return;
+      try {
+        const resp = await fetch(config.policyUrl, { cache: "no-store" });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (data.cognitive_load != null) {
+          const load = data.cognitive_load;
+          const [band, bandLabel] = loadBand(load);
+          state.load = load;
+          $("loadCard").className = `metric-card is-${band}`;
+          $("loadValue").textContent = Math.round(load);
+          $("loadBand").textContent = bandLabel;
+        }
+        if (data.signal_quality) {
+          const q = data.signal_quality;
+          $("qualityLamp").className = `quality-lamp is-${q === "pass" ? "pass" : "warning"}`;
+          $("qualityStatus").textContent = q === "pass" ? "Pass" : "Warning";
+        }
+        state._lastPolicyGaze = data.gaze_region || "";
+        const level = data.explanation_level || "none";
+        // 优先级：detailed > example > brief。更高优先级的立刻切换，同级等冷却
+        const priority = { "brief": 1, "example": 2, "detailed": 3 };
+        const currentPriority = priority[lastPolicyLevel] || 0;
+        const newPriority = priority[level] || 0;
+        const isUpgrade = newPriority > currentPriority;
+        const isDifferent = level !== lastPolicyLevel;
+        const cooldownOver = (Date.now() - lastPolicyTriggerTime) > 8000;
+
+        const policyTriggered = level !== "none" && data.suppressed !== true && data.action !== "hold";
+        if (policyTriggered && (isUpgrade || isDifferent || cooldownOver)) {
+          lastPolicyLevel = level;
+          lastPolicyTriggerTime = Date.now();
+          triggerPolicyExplanation(level, { policy: data, source: "policy" });
+          // 触发后立刻复位服务器，防止同一份数据重复触发
+          fetch(config.policyUrl, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ explanation_level: "none", cognitive_load: 0, attention: 100, signal_quality: "pass" })
+          }).catch(() => {});
+        } else if (level === "none" && lastPolicyLevel !== "none") {
+          lastPolicyLevel = "none";
+          // 清除高亮和原文边框
+          document.querySelectorAll(".explain-btn").forEach(b => b.classList.remove("is-active"));
+          const readingEl = $("readingContent");
+          if (readingEl) readingEl.style.boxShadow = "";
+        }
+      } catch (_) {}
+    }
+
+    let policyLLMBusy = false;
+    let pendingPolicySuggestion = null;
+    function escapeHtml(value) {
+      const element = document.createElement("div");
+      element.textContent = String(value ?? "");
+      return element.innerHTML;
+    }
+
+    async function triggerPolicyExplanation(level, options = {}) {
+      const map = { "brief": "简单解释", "example": "举例子", "detailed": "详细解释" };
+      const uiLevel = map[level];
+      if (!uiLevel) return;
+
+      // 移除旧的 Policy 通知卡片（不堆积）
+      const messagesEl = $("chatMessages");
+      messagesEl.querySelectorAll(".policy-exchange.is-pending").forEach(c => c.remove());
+
+      const slide = getCurrentSlideInfo();
+      const calibratedFocus = options.policy?.target_aoi || state._lastPolicyGaze;
+      const inferred = calibratedFocus ? null : await inferPolicyFocus(options.policy || {});
+      const focus = calibratedFocus || inferred?.focus || `当前材料《${slide.title}》`;
+      pendingPolicySuggestion = {
+        level,
+        policy: options.policy || {},
+        source: options.source || "policy",
+        focus,
+        focusInference: inferred,
+        previousManualLevel: state.lastExplainLevel,
+        shownAt: Date.now(),
+      };
+
+      // Policy 只询问是否需要帮助，不在确认前调用 LLM。
+      const card = document.createElement("div");
+      card.className = "chat-msg-row is-ai policy-exchange is-pending";
+      const levelNames = { "brief": "简单解释", "example": "举例子", "detailed": "详细解释" };
+      const promptText = `你是不是对「${focus}」感到疑惑？我可以按${levelNames[level] || level}来帮助你。`;
+      card.innerHTML = `<div class="chat-avatar-mini">AI</div><div class="chat-bubble">
+        你是不是对「${escapeHtml(focus)}」感到疑惑？我可以按<b>${levelNames[level] || level}</b>来帮助你。
+      </div>`;
+      const responseRow = document.createElement("div");
+      responseRow.className = "chat-msg-row is-user policy-exchange is-pending";
+      responseRow.innerHTML = `<div class="chat-avatar-mini">U</div><div class="chat-bubble">
+        <div class="policy-card-buttons">
+          <button class="policy-card-btn" data-policy-response="accept">需要帮助</button>
+          <button class="policy-card-btn is-dismiss" data-policy-response="reject">不需要</button>
+        </div>
+      </div>`;
+      messagesEl.appendChild(card);
+      messagesEl.appendChild(responseRow);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      pendingPolicySuggestion.promptCard = card;
+      pendingPolicySuggestion.responseRow = responseRow;
+      recordPolicyPrompt(pendingPolicySuggestion, promptText);
+      responseRow.querySelector('[data-policy-response="accept"]').addEventListener("click", () => {
+        acceptPolicySuggestion(responseRow);
+      });
+      responseRow.querySelector('[data-policy-response="reject"]').addEventListener("click", () => {
+        rejectPolicySuggestion(responseRow);
+      });
+
+      // 底部解释按钮高亮推荐档位
+      document.querySelectorAll(".explain-btn").forEach(b => {
+        b.classList.remove("is-active");
+        if (b.textContent.trim() === uiLevel) b.classList.add("is-active");
+      });
+
+      // 原文高亮闪烁（优先用 gaze_region 精准定位）
+      const gaze = state._lastPolicyGaze || "";
+      let targetEl = null;
+      if (gaze) {
+        // 尝试匹配 gaze_region 描述到具体元素
+        const readingEl = $("readingContent");
+        if (readingEl) {
+          const allEls = readingEl.querySelectorAll("p, h3, .formula-block, .data-table");
+          for (const el of allEls) {
+            if (el.textContent.includes(gaze) || gaze.includes(el.textContent.slice(0, 20))) {
+              targetEl = el;
+              break;
+            }
+          }
+          if (!targetEl) targetEl = readingEl; // fallback
+        }
+      } else {
+        targetEl = $("readingContent");
+      }
+      if (targetEl) {
+        targetEl.style.boxShadow = "inset 0 0 0 3px var(--amber)";
+        targetEl.style.transition = "box-shadow 300ms ease";
+        targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => {
+          targetEl.style.boxShadow = "inset 0 0 0 3px transparent";
+        }, 3000);
+      }
+    }
+
+    async function inferPolicyFocus(policy) {
+      try {
+        const frameResponse = await fetch(config.gazeFrameUrl, { cache: "no-store" });
+        if (!frameResponse.ok) return null;
+        const frame = await frameResponse.json();
+        if (frame.gaze?.x_normalized == null || frame.gaze?.y_normalized == null) {
+          return null;
+        }
+        const mappedTarget = frame.screen_mapping?.valid ? frame.screen_mapping?.target : null;
+        if (mappedTarget?.text) {
+          return {
+            focus: mappedTarget.text.slice(0, 60),
+            frameTimestamp: frame.timestamp,
+            frameAgeMs: frame.age_ms,
+            gaze: frame.gaze,
+            screenMapping: frame.screen_mapping,
+          };
+        }
+        const slide = getCurrentSlideInfo();
+        const material = $("readingContent")?.innerText?.trim().slice(0, 8000) || slide.summary;
+        const prompt = `图中红色折线和黄色采样点表示被试最近一段时间的眼动轨迹，末端红色准星表示最新位置。请优先根据轨迹聚集、停留区域，而不是单一准星，结合场景图与下面的题目材料判断被试最可能持续查看的具体内容。只返回一个简短内容名称，不超过30个汉字；轨迹不足或无法判断时返回“当前材料”。\n\n标题：${slide.title}\n题目材料：${material}\n轨迹时间窗：${frame.trajectory_window_ms || 0} ms\n轨迹采样：${JSON.stringify(frame.trajectory || [])}\n最新坐标：${JSON.stringify(frame.gaze || {})}\nPolicy：${JSON.stringify(policy)}`;
+        const data = await callAI(
+          [{
+            role: "user",
+            content: [
+              { type: "image_url", image_url: { url: frame.data_url } },
+              { type: "text", text: prompt },
+            ],
+          }],
+          { model: config.vlModel, temperature: 0.1, max_tokens: 80 },
+        );
+        const raw = data.choices?.[0]?.message?.content;
+        const focus = String(raw || "").replace(/[\r\n"“”]/g, "").trim().slice(0, 60);
+        if (!focus) return null;
+        return {
+          focus,
+          frameTimestamp: frame.timestamp,
+          frameAgeMs: frame.age_ms,
+          gaze: frame.gaze,
+          trajectorySamples: frame.trajectory?.length || 0,
+          trajectoryWindowMs: frame.trajectory_window_ms || 0,
+        };
+      } catch (error) {
+        console.warn("Policy focus inference failed:", error.message);
+        return null;
+      }
+    }
+
+    async function acceptPolicySuggestion(responseRow) {
+      const suggestion = pendingPolicySuggestion;
+      if (!suggestion) return;
+      pendingPolicySuggestion = null;
+      settlePolicyExchange(suggestion, responseRow, "需要帮助");
+      recordPolicyResponse(suggestion, "accepted");
+      await sendPolicyTriggeredMessage(suggestion);
+    }
+
+    function rejectPolicySuggestion(responseRow) {
+      const suggestion = pendingPolicySuggestion;
+      if (!suggestion) return;
+      pendingPolicySuggestion = null;
+      settlePolicyExchange(suggestion, responseRow, "不需要");
+      recordPolicyResponse(suggestion, "rejected");
+      restoreManualExplainLevel(suggestion.previousManualLevel);
+      const readingEl = $("readingContent");
+      if (readingEl) readingEl.style.boxShadow = "";
+    }
+
+    function settlePolicyExchange(suggestion, responseRow, answer) {
+      suggestion.promptCard?.classList.remove("is-pending");
+      responseRow.classList.remove("is-pending");
+      const bubble = responseRow.querySelector(".chat-bubble");
+      if (bubble) bubble.textContent = answer;
+      const record = {
+        role: "user",
+        content: answer,
+        timestamp: Date.now(),
+        condition: state.condition,
+        triggerSource: suggestion.source,
+        messageType: "policy_response",
+      };
+      chatHistory.push(record);
+      const trial = currentTrialRecord();
+      if (trial) trial.chatMessages.push(record);
+    }
+
+    function recordPolicyPrompt(suggestion, content) {
+      const record = {
+        role: "assistant",
+        content,
+        timestamp: suggestion.shownAt,
+        condition: state.condition,
+        explainLevel: suggestion.level,
+        triggerSource: suggestion.source,
+        messageType: "policy_prompt",
+      };
+      chatHistory.push(record);
+      const trial = currentTrialRecord();
+      if (trial) trial.chatMessages.push(record);
+    }
+
+    function recordPolicyResponse(suggestion, response) {
+      const trial = currentTrialRecord();
+      if (!trial) return;
+      trial.policySuggestions = trial.policySuggestions || [];
+      trial.policySuggestions.push({
+        level: suggestion.level,
+        focus: suggestion.focus,
+        focusInference: suggestion.focusInference,
+        source: suggestion.source,
+        response,
+        policy: suggestion.policy,
+        shownAt: suggestion.shownAt,
+        respondedAt: Date.now(),
+      });
+    }
+
+    function restoreManualExplainLevel(level) {
+      state.lastExplainLevel = level || null;
+      document.querySelectorAll(".explain-btn").forEach(button => {
+        button.classList.toggle("is-active", button.dataset.level === state.lastExplainLevel);
+      });
+      updateSendButtonState();
+    }
+
+    async function sendPolicyTriggeredMessage(suggestion) {
+      if (policyLLMBusy || state.currentPage !== "main") return;
+      policyLLMBusy = true;
+      const levelNames = { brief: "简单解释", example: "结合例子解释", detailed: "详细解释" };
+      const slide = getCurrentSlideInfo();
+      const prompt = `被试确认需要帮助。请结合最近一段时间的眼动轨迹场景帧和当前材料《${slide.title}》，围绕「${suggestion.focus}」提供${levelNames[suggestion.level] || "适当"}的解释。不要声称能够仅凭眼动轨迹确定用户的心理状态。`;
+      try {
+        await sendMessage({
+          text: prompt,
+          suppressUserBubble: true,
+          suppressUserRecord: true,
+          includeSceneFrame: true,
+          source: suggestion.source,
+          policy: suggestion.policy,
+          explainLevel: suggestion.level,
+        });
+      } finally {
+        policyLLMBusy = false;
+        restoreManualExplainLevel(suggestion.previousManualLevel);
+      }
+    }
+
+    async function manualPolicyTrigger() {
+      try {
+        const response = await fetch(`${_serverBase}/api/policy/evaluate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        });
+        if (!response.ok) throw new Error(`Policy API ${response.status}`);
+        const policy = await response.json();
+        const level = policy.explanation_level && policy.explanation_level !== "none"
+          ? policy.explanation_level
+          : "brief";
+        await triggerPolicyExplanation(level, { policy, source: "f10" });
+      } catch (error) {
+        addChatMsg("ai", `F10 触发失败：${error.message}`);
+      }
+    }
+
+    function updateAiStatus() {
+      if (!config.apiKey) {
+        setAiStatus("live", "Backend");
+      } else {
+        setAiStatus("live", "Ready");
+      }
+    }
+
+    /* ===== LaTeX Math Rendering ===== */
+    function renderMathInElement(el) {
+      if (!el || !window.katex) return;
+      // Process block math $$...$$ first, then inline $...$
+      const html = el.innerHTML;
+      // $$...$$ → display math
+      let processed = html.replace(/\$\$([\s\S]*?)\$\$/g, (_, formula) => {
+        try { return katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false }); }
+        catch (e) { return `<span style="color:var(--red)">[Math Error]</span>`; }
+      });
+      // $...$ → inline math (skip $$ already processed)
+      processed = processed.replace(/(?<!\$)\$(?!\$)([\s\S]*?)(?<!\$)\$(?!\$)/g, (_, formula) => {
+        try { return katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false }); }
+        catch (e) { return `<span style="color:var(--red)">[Math Error]</span>`; }
+      });
+      el.innerHTML = processed;
+    }
+
+    /* ===== Trial Management ===== */
+    function loadTrial(index) {
+      pendingPolicySuggestion = null;
+      state.inQuiz = false;
+      setAIInteractionEnabled(true);
+      document.querySelectorAll(".policy-exchange").forEach(card => card.remove());
+      const slideIdx = trialOrder[index];
+      const slide = slides[slideIdx];
+      const trialRecord = createTrialRecord(index, slide);
+      experimentData.trials.push(trialRecord);
+
+      // Update HUD
+      $("trialDisplay").textContent = `${index + 1} / 18`;
+      $("domainLabel").textContent = slide.domain;
+      $("difficultyChip").textContent = slide.difficulty;
+      $("difficultyChip").className = `difficulty-chip ${slide.diffClass}`;
+      $("domainTag").textContent = slide.domain;
+      $("domainTag").className = `difficulty-chip ${slide.diffClass}`;
+      $("diffTag").textContent = `${slide.difficulty}难度`;
+      $("diffTag").className = `difficulty-chip ${slide.diffClass}`;
+      $("trialIndexTag").textContent = `${index + 1} / 18`;
+
+      fetch(`${_serverBase}/api/ui/context`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trial_id: `T${String(index + 1).padStart(2, "0")}`,
+          phase: "reading",
+          slide_id: String(slideIdx),
+          seconds_in_trial: 0,
+          metadata: { domain: slide.domain, difficulty: slide.difficulty },
+        }),
+      }).catch((err) => console.warn("UI context sync failed:", err.message));
+
+      // Update reading content
+      $("readingTitle").textContent = slide.title;
+      $("readingContent").innerHTML = slide.content;
+      // 渲染 LaTeX 数学公式 $...$ 和 $$...$$
+      renderMathInElement($("readingContent"));
+      setTimeout(syncScreenLayout, 80);
+
+      // Update progress
+      const pfEl = $("progressFill"); if (pfEl) pfEl.style.width = `${((index + 1) / 18 * 100)}%`;
+      const plEl = $("progressLabel"); if (plEl) plEl.textContent = `试次 ${index + 1}/18`;
+
+      // Store quiz data for step-by-step display
+      state._currentQuiz = slide.quiz;
+      state._currentQuizIndex = 0;
+      state._quizAnswers = [null, null];
+    }
+
+    function showQuizStep(step) {
+      const quiz = state._currentQuiz;
+      if (!quiz || step >= quiz.length) return;
+      const q = quiz[step];
+      const container = $("quizModal").querySelector(".quiz-body");
+      container.innerHTML = `
+        <p style="font-weight:850;font-size:17px;margin-bottom:14px;">第 ${step + 1} 题：${q.question}</p>
+        <div class="quiz-options">
+          ${q.options.map((opt, oi) => `<div class="quiz-option" onclick="selectOption(this, ${oi})">${opt}</div>`).join("")}
+        </div>
+      `;
+      $("quizSubmitBtn").textContent = step < quiz.length - 1 ? "下一题" : "确认提交";
+      $("quizSubmitBtn").disabled = true;
+      state._currentQuizIndex = step;
+    }
+
+    function selectOption(el, optIndex) {
+      el.parentElement.querySelectorAll(".quiz-option").forEach(o => o.classList.remove("is-selected"));
+      el.classList.add("is-selected");
+      state._quizAnswers[state._currentQuizIndex] = optIndex;
+      $("quizSubmitBtn").disabled = false;
+    }
+
+    /* ===== Quiz Submit ===== */
+    $("quizSubmitBtn").addEventListener("click", () => {
+      const qi = state._currentQuizIndex;
+      if (state._quizAnswers[qi] === null) return;
+
+      const quiz = state._currentQuiz;
+      if (qi < quiz.length - 1) {
+        // 还有下一题
+        showQuizStep(qi + 1);
+      } else {
+        // 最后一道题，结算
+        const slideIdx = trialOrder[currentTrial];
+        const slide = slides[slideIdx];
+        const results = quiz.map((q, i) => ({
+          question: q.question,
+          selectedIndex: state._quizAnswers[i],
+          correctIndex: q.answerIndex,
+          isCorrect: state._quizAnswers[i] === q.answerIndex,
+        }));
+        const correctCount = results.filter(r => r.isCorrect).length;
+        const isCorrect = correctCount >= 1;
+
+        closeModal("quizModal");
+        showToast(isCorrect ? "success" : "error", isCorrect ? `答对 ${correctCount}/${quiz.length} 题` : `答对 ${correctCount}/${quiz.length} 题`);
+
+        quizResults.push({ slideId: slide.id, results, correctCount, isCorrect });
+        const trial = currentTrialRecord();
+        if (trial) {
+          trial.endTime = Date.now();
+          trial.endISO = new Date().toISOString();
+          trial.durationSec = (trial.endTime - trial.startTime) / 1000;
+          trial.quiz.results = results;
+          trial.quiz.correctCount = correctCount;
+          trial.quiz.isCorrect = isCorrect;
+          trial.quiz.quizSubmitTime = Date.now();
+          if (trial.quiz.quizOpenTime) {
+            trial.quiz.responseTimeSec = (trial.quiz.quizSubmitTime - trial.quiz.quizOpenTime) / 1000;
+          }
+          const loads = trial.loadSamples.map(s => s.value);
+          if (loads.length > 0) {
+            trial.loadAvg = Math.round(loads.reduce((a,b)=>a+b,0) / loads.length);
+            trial.loadMax = Math.round(Math.max(...loads));
+            trial.loadMin = Math.round(Math.min(...loads));
+            trial.loadStd = Math.round(Math.sqrt(loads.reduce((s,v)=>s+(v-trial.loadAvg)**2,0)/loads.length));
+          }
+          trial.chatCount = trial.chatMessages.length;
+        }
+
+        currentTrial++;
+        if (currentTrial === 6 || currentTrial === 12) {
+          const prevCond = currentTrial === 6 ? conditionOrder[0] : conditionOrder[1];
+          showConditionQuestionnaire(prevCond, () => {
+            showRestBreak(() => {
+              switchCondition(conditionOrder[currentTrial === 6 ? 1 : 2]);
+              loadTrial(currentTrial);
+            });
+          });
+          return;
+        }
+        if (currentTrial >= 18) {
+          clearInterval(state.pollTimer);
+          clearInterval(experimentTimerInterval);
+          const totalCorrect = quizResults.reduce((s, r) => s + r.correctCount, 0);
+          const elapsedSecs = Math.floor((Date.now() - experimentStartTime) / 1000);
+          const mins = Math.floor(elapsedSecs / 60);
+          const secs = elapsedSecs % 60;
+          $("endTrialCount").textContent = `${quizResults.length} / 18`;
+          $("endAccuracy").textContent = `${Math.round(totalCorrect / (quizResults.length * 2) * 100)}%`;
+          $("endTime").textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+          saveOnExperimentEnd();
+          showConditionQuestionnaire(null, () => { navigateTo("questionnaire"); });
+        } else {
+          chatHistory.length = 0;
+          apiContext.length = 0;
+          state.lastExplainLevel = null;
+          document.querySelectorAll(".explain-btn").forEach(b => b.classList.remove("is-active"));
+          $("chatMessages").innerHTML = "";
+          loadTrial(currentTrial);
+        }
+      }
+    });
+
+    $("nextBtn").addEventListener("click", () => {
+      state.inQuiz = true;
+      setAIInteractionEnabled(false);
+      syncPipelineUIContext("quiz");
+      openModal("quizModal");
+      const trial = currentTrialRecord();
+      if (trial) trial.quiz.quizOpenTime = Date.now();
+      showQuizStep(0);
+    });
+
+    /* ===== Modal & Toast ===== */
+    function openModal(id) { $(id).classList.add("is-open"); }
+    function closeModal(id) { $(id).classList.remove("is-open"); }
+    function showToast(type, message) {
+      const toast = $("toast");
+      toast.className = `toast is-${type}`;
+      toast.textContent = message;
+      toast.classList.add("is-show");
+      setTimeout(() => toast.classList.remove("is-show"), 2500);
+    }
+
+    /* ===== Experiment Stats ===== */
+    let experimentStartTime = null;
+    let experimentTimerInterval = null;
+    const quizResults = [];
+
+    function startExperimentTimer() {
+      experimentStartTime = Date.now();
+      clearInterval(experimentTimerInterval);
+      experimentTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - experimentStartTime) / 1000);
+        const mins = Math.floor(elapsed / 60);
+        const secs = elapsed % 60;
+        const etEl = $("elapsedTime"); if (etEl) etEl.textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+      }, 1000);
+    }
+
+    /* ===== Data Storage ===== */
+    const STORAGE_KEY = "cogload_experiment_data";
+    function saveToLocalStorage() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(experimentData)); } catch (e) {}
+    }
+    function computeSummary() {
+      const s = experimentData.summary;
+      s.totalTrials = experimentData.trials.length;
+      const allResults = experimentData.trials.flatMap(t => t.quiz?.results || []);
+      s.totalCorrect = allResults.filter(r => r.isCorrect).length;
+      s.accuracy = s.totalTrials > 0 ? Math.round(s.totalCorrect / (s.totalTrials * 2) * 100) + "%" : "--";
+      s.totalLoadSamples = experimentData.trials.reduce((a, t) => a + (t.loadSamples?.length || 0), 0);
+      s.totalChatMessages = experimentData.trials.reduce((a, t) => a + (t.chatMessages?.length || 0), 0);
+      if (experimentData.meta.experimentStartTime) {
+        experimentData.meta.totalDurationSec = Math.floor((Date.now() - experimentData.meta.experimentStartTime) / 1000);
+        experimentData.meta.experimentEndTime = Date.now();
+        experimentData.meta.endISO = new Date().toISOString();
+      }
+    }
+    function saveOnExperimentEnd() { computeSummary(); saveToLocalStorage(); }
+    let autoSaveInterval = null;
+    function startAutoSave() {
+      if (autoSaveInterval) clearInterval(autoSaveInterval);
+      autoSaveInterval = setInterval(() => saveToLocalStorage(), 15000);
+    }
+    function exportExperimentData() {
+      computeSummary(); saveToLocalStorage();
+      const blob = new Blob([JSON.stringify(experimentData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `cogload_${experimentData.meta.subjectId || "unknown"}_${Date.now()}.json`;
+      a.click(); URL.revokeObjectURL(url);
+      showToast("success", "数据已导出");
+    }
+    async function submitCollectedData() {
+      computeSummary();
+      const payload = { subjectId: experimentData.meta.subjectId || "unknown", experimentData };
+      try { await fetch(config.dataCollectorUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); } catch (_) {}
+      saveToLocalStorage(); navigateTo("end"); showToast("success", "实验结束");
+    }
+    const finishQuestionnaireBtn = $("finishQuestionnaireBtn");
+    if (finishQuestionnaireBtn) finishQuestionnaireBtn.addEventListener("click", submitCollectedData);
+
+    function loadBand(value) {
+      if (value == null || Number.isNaN(value)) return ["waiting", "Waiting"];
+      if (value > 70) return ["high", "High"];
+      if (value < 35) return ["low", "Low"];
+      return ["moderate", "Moderate"];
+    }
+
+    function updateBanner(band, quality) {
+      $("messageBanner").className = "message-banner";
+      if (quality !== "pass") {
+        $("messageBanner").textContent = "信号质量警告，认知负荷指标仅供参考";
+        $("messageBanner").classList.add("is-quality");
+      } else if (band === "high") {
+        $("messageBanner").textContent = "认知负荷较高，AI对话已简化";
+        $("messageBanner").classList.add("is-high");
+      } else if (band === "low") {
+        $("messageBanner").textContent = "认知负荷较低，可展开更多对话";
+        $("messageBanner").classList.add("is-low");
+      } else {
+        $("messageBanner").classList.add("is-hidden");
+      }
+    }
+
+    /* ===== Qwen VL Chat Integration ===== */
+    // chatHistory: 显示用（记录所有消息到trial数据）
+    const chatHistory = [];
+    // apiContext: API调用用（严格 user→assistant 交替，只存 role+content）
+    const apiContext = [];
+
+    $("sendBtn").addEventListener("click", () => sendMessage());
+    // 粘贴触发：监听 paste 事件，自动填充并启用发送按钮
+    $("chatInput").addEventListener("paste", () => {
+      setTimeout(() => {
+        updateSendButtonState();
+      }, 50);
+    });
+    $("chatInput").addEventListener("input", () => {
+      updateSendButtonState();
+    });
+    let layoutSyncTimer = null;
+    function scheduleScreenLayoutSync() {
+      clearTimeout(layoutSyncTimer);
+      layoutSyncTimer = setTimeout(syncScreenLayout, 80);
+    }
+    $("readingContent").addEventListener("scroll", scheduleScreenLayoutSync);
+    window.addEventListener("resize", scheduleScreenLayoutSync);
+    // 阻止键盘输入，仅允许粘贴
+    $("chatInput").addEventListener("keydown", (e) => {
+      // 允许 Ctrl+V / 删除 / 全选等操作，但阻止普通字符输入
+      if (e.ctrlKey || e.metaKey || e.key === "Backspace" || e.key === "Delete" ||
+          e.key.startsWith("Arrow") || e.key === "Tab" || e.key === "Escape" ||
+          e.key === "Home" || e.key === "End") {
+        return;
+      }
+      e.preventDefault();
+    });
+
+    /* ===== Condition Questionnaire ===== */
+    function showConditionQuestionnaire(prevCond, callback) {
+      syncPipelineUIContext(prevCond === null ? "final_feedback" : "condition_feedback");
+      const isFinal = prevCond === null;
+      const condNames = { 1: "第一部分", 2: "第二部分", 3: "第三部分" };
+      const hasTools = prevCond >= 2;
+      const toolName = prevCond === 2 ? "眼动追踪" : prevCond === 3 ? "眼动追踪 + EEG" : "";
+
+      $("condQTitle").textContent = isFinal ? "实验完成 · 整体反馈" : `${condNames[prevCond]}完成 · 阶段反馈`;
+      $("condQDesc").textContent = isFinal
+        ? "全部18道题已完成，请根据整体实验体验回答："
+        : hasTools
+          ? `本阶段中你使用了${toolName}辅助阅读，请回答：`
+          : "请根据本阶段的阅读体验回答：";
+
+      $("condQBody").innerHTML = `
+        <div style="margin-bottom:18px;">
+          <label style="font-weight:850;font-size:14px;display:block;margin-bottom:6px;">1. ${isFinal ? "整体" : "本阶段"}题目难度感觉？</label>
+          <div class="likert-row" id="cqDiff">
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqDiff')">1<br><small>很简单</small></button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqDiff')">2</button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqDiff')">3<br><small>适中</small></button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqDiff')">4</button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqDiff')">5<br><small>很难</small></button>
+          </div>
+        </div>
+        <div style="margin-bottom:18px;">
+          <label style="font-weight:850;font-size:14px;display:block;margin-bottom:6px;">2. ${isFinal ? "整体" : ""}大脑疲劳或负担程度？</label>
+          <div class="likert-row" id="cqLoad">
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqLoad')">1<br><small>很轻松</small></button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqLoad')">2</button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqLoad')">3<br><small>适中</small></button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqLoad')">4</button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqLoad')">5<br><small>很累</small></button>
+          </div>
+        </div>
+        ${hasTools ? `
+        <div style="margin-bottom:18px;">
+          <label style="font-weight:850;font-size:14px;display:block;margin-bottom:6px;">3. ${toolName}对你理解题目有帮助吗？</label>
+          <div class="likert-row" id="cqTool">
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqTool')">1<br><small>没帮助</small></button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqTool')">2</button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqTool')">3<br><small>一般</small></button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqTool')">4</button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqTool')">5<br><small>非常有帮助</small></button>
+          </div>
+        </div>` : ""}
+        ${isFinal ? `
+        <div style="margin-bottom:18px;">
+          <label style="font-weight:850;font-size:14px;display:block;margin-bottom:6px;">3. AI 助手对你的阅读有帮助吗？</label>
+          <div class="likert-row" id="cqAI">
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqAI')">1<br><small>没帮助</small></button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqAI')">2</button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqAI')">3<br><small>一般</small></button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqAI')">4</button>
+            <button class="likert-btn" onclick="rateLikertSmall(this,'cqAI')">5<br><small>非常有帮助</small></button>
+          </div>
+        </div>` : ""}
+      `;
+
+      $("condQModal").style.cssText = ""; // 全屏
+      openModal("condQModal");
+      $("condQSubmitBtn").disabled = false;
+
+      $("condQSubmitBtn").onclick = () => {
+        closeModal("condQModal");
+        experimentData.meta.conditionSurveys = experimentData.meta.conditionSurveys || [];
+        experimentData.meta.conditionSurveys.push({
+          condition: prevCond,
+          isFinal,
+          timestamp: Date.now(),
+        });
+        if (callback) callback();
+      };
+    }
+
+    function rateLikertSmall(btn, groupId) {
+      document.querySelectorAll(`#${groupId} .likert-btn`).forEach(b => b.classList.remove("is-selected"));
+      btn.classList.add("is-selected");
+    }
+
+    /* ===== Rest Break (5min countdown) ===== */
+    function showRestBreak(callback) {
+      syncPipelineUIContext("rest");
+      openModal("restModal");
+      let remaining = 300; // 5分钟 = 300秒
+      const timerEl = $("restTimer");
+      const skipBtn = $("restSkipBtn");
+      timerEl.textContent = "5:00";
+      timerEl.classList.add("is-running");
+
+      const tick = () => {
+        remaining--;
+        const mins = Math.floor(remaining / 60);
+        const secs = remaining % 60;
+        timerEl.textContent = `${mins}:${secs.toString().padStart(2, "0")}`;
+        if (remaining <= 0) { finish(); }
+      };
+
+      const finish = () => {
+        clearInterval(restInterval);
+        timerEl.classList.remove("is-running");
+        closeModal("restModal");
+        if (callback) callback();
+      };
+
+      let restInterval = setInterval(tick, 1000);
+
+      // 提前继续
+      skipBtn.onclick = () => finish();
+    }
+
+    /* ===== Condition Control (后台自动，被试不可见) ===== */
+    // 每个被试随机生成 condition 顺序
+    function generateConditionOrder() {
+      const orders = [[1,2,3], [2,1,3], [3,1,2], [1,3,2], [2,3,1], [3,2,1]];
+      return orders[Math.floor(Math.random() * orders.length)];
+    }
+    let conditionOrder = generateConditionOrder();
+
+    async function startPipelineSession(sessionId, condition) {
+      try {
+        await fetch(`${_serverBase}/api/session/start`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId || "unknown", condition }),
+        });
+      } catch (err) {
+        console.warn("Pipeline session start failed:", err.message);
+      }
+    }
+
+    async function syncPipelineUIContext(phase) {
+      try {
+        await fetch(`${_serverBase}/api/ui/context`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phase, trial_id: null, seconds_in_trial: 0 }),
+        });
+      } catch (err) {
+        console.warn("Pipeline UI phase sync failed:", err.message);
+      }
+    }
+
+    function switchCondition(cond) {
+      state.condition = cond;
+      pendingPolicySuggestion = null;
+      document.querySelectorAll(".policy-exchange.is-pending").forEach(card => card.remove());
+      syncConditionToServer(cond);
+      // 三个 Condition 都显示粘贴框 + 四个解释按钮
+      $("explainButtons").style.display = "flex";
+      $("chatInputArea").style.display = "grid";
+      // 清除解释档位高亮
+      document.querySelectorAll(".explain-btn").forEach(b => b.classList.remove("is-active"));
+      // 记录时间戳
+      experimentData.meta.conditionChanges = experimentData.meta.conditionChanges || [];
+      experimentData.meta.conditionChanges.push({ condition: cond, timestamp: Date.now(), iso: new Date().toISOString() });
+      // 中性提示（不提 C1/C2/C3），5 秒后自动消失
+      if (cond === 2 || cond === 3) {
+        const text = cond === 2 ? "接下来将进入下一部分，请继续按题目操作。" : "接下来将进入最后一部分，请继续按题目操作。";
+        const row = document.createElement("div");
+        row.className = "chat-msg-row is-system cond-notice";
+        const bubble = document.createElement("div");
+        bubble.className = "chat-bubble";
+        bubble.textContent = text;
+        row.appendChild(bubble);
+        $("chatMessages").appendChild(row);
+        $("chatMessages").scrollTop = $("chatMessages").scrollHeight;
+        setTimeout(() => row.remove(), 5000);
+      }
+      console.log(`Condition switched to ${cond} (auto)`);
+    }
+
+    async function syncConditionToServer(cond) {
+      try {
+        await fetch(config.conditionUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ condition: cond, ts: new Date().toISOString() }),
+        });
+      } catch (err) {
+        console.warn("Condition sync failed:", err.message);
+      }
+    }
+
+    function selectExplainLevel(level, button) {
+      state.lastExplainLevel = level;
+      document.querySelectorAll(".explain-btn").forEach(b => b.classList.remove("is-active"));
+      if (button) button.classList.add("is-active");
+      updateSendButtonState();
+      const trial = currentTrialRecord();
+      if (trial) {
+        trial.explainLevels = trial.explainLevels || [];
+        trial.explainLevels.push({ level, source: "manual_selection", timestamp: Date.now() });
+      }
+    }
+
+    function updateSendButtonState() {
+      const hasText = $("chatInput").value.trim().length > 0;
+      const hasLevel = ["简单解释", "举例子", "详细解释"].includes(state.lastExplainLevel);
+      $("chatInput").classList.toggle("has-text", hasText);
+      $("sendBtn").disabled = state.inQuiz || state.aiBusy || !(hasText && hasLevel);
+    }
+
+    function setAIInteractionEnabled(enabled) {
+      $("chatInput").disabled = !enabled;
+      document.querySelectorAll(".explain-btn").forEach(button => { button.disabled = !enabled; });
+      updateSendButtonState();
+    }
+
+    async function sendMessage(options = {}) {
+      const text = options.text || $("chatInput").value.trim();
+      if (!text) return;
+      if (state.inQuiz) return;
+      if (state.aiBusy) return;
+      if (!options.source && !["简单解释", "举例子", "详细解释"].includes(state.lastExplainLevel)) {
+        showToast("info", "请先选择解释难度");
+        return;
+      }
+      const selectedLevel = options.explainLevel || state.lastExplainLevel;
+      const displayText = options.displayText || (
+        options.source ? text : `${selectedLevel}：${text}`
+      );
+      if (!options.suppressUserBubble) addChatMsg("user", displayText);
+      $("chatInput").value = "";
+      state.aiBusy = true;
+      updateSendButtonState();
+      const typing = ensureTypingIndicator();
+      typing.style.display = "flex";
+      $("chatMessages").scrollTop = $("chatMessages").scrollHeight;
+
+      // ★ 记录用户消息到数据存储
+      const userMsgRecord = {
+        role: "user", content: displayText, requestContent: text, timestamp: Date.now(),
+        condition: state.condition,
+        explainLevel: selectedLevel,
+        triggerSource: options.source || "manual",
+        policy: options.policy || null,
+      };
+      if (!options.suppressUserRecord) chatHistory.push(userMsgRecord);
+      const trial = currentTrialRecord();
+      if (trial && !options.suppressUserRecord) trial.chatMessages.push(userMsgRecord);
+      // ★ 同时加入API上下文（严格交替）
+      apiContext.push({ role: "user", content: text });
+
+      try {
+        const response = await callQwenVL(text, {
+          includeSceneFrame: options.includeSceneFrame === true,
+          policy: options.policy || null,
+          explainLevel: selectedLevel,
+        });
+        if (typing) typing.style.display = "none";
+        addChatMsg("ai", response);
+        setAiStatus("live", "Live");
+        const aiMsgRecord = {
+          role: "assistant", content: response, timestamp: Date.now(),
+          condition: state.condition,
+          explainLevel: selectedLevel,
+        };
+        chatHistory.push(aiMsgRecord);
+        if (trial) trial.chatMessages.push(aiMsgRecord);
+        apiContext.push({ role: "assistant", content: response });
+      } catch (err) {
+        if (typing) typing.style.display = "none";
+        let errDisplay = err.message;
+        if (err.message.includes("Failed to fetch") || err.message.includes("NetworkError") || err.name === "TypeError") {
+          errDisplay = "网络连接失败，可能是代理或API Key没启动。请先启动本地代理，再确认环境变量。";
+        }
+        const errMsg = `⚠️ AI调用失败: ${errDisplay}`;
+        addChatMsg("ai", errMsg);
+        setAiStatus("error", "Error");
+        const errRecord = { role: "assistant", content: errMsg, timestamp: Date.now(), isError: true };
+        chatHistory.push(errRecord);
+        if (trial) trial.chatMessages.push(errRecord);
+        apiContext.pop();
+        console.error("QwenVL call failed:", err);
+      }
+      state.aiBusy = false;
+      updateSendButtonState();
+    }
+
+    // ===== AI API 调用（与 UI 解耦，换模型只改这里）=====
+    // 此函数负责所有 API 通信，UI 层只管组装 messages 和显示回复
+    // 后端 server.py 转发到阿里云百炼 DashScope 兼容接口
+    async function callAI(messages, opts = {}) {
+      // 演示模式：不走真实 API，直接返回本地预设答案
+      if (DEMO_AI_MODE) {
+        const demoReply = buildDemoAIReply(messages);
+        return {
+          id: `demo-${Date.now()}`,
+          object: "chat.completion",
+          model: opts.model || config.vlModel,
+          choices: [
+            {
+              index: 0,
+              message: { role: "assistant", content: demoReply },
+              finish_reason: "stop",
+            },
+          ],
+          usage: {
+            prompt_tokens: 0,
+            completion_tokens: demoReply.length,
+            total_tokens: demoReply.length,
+          },
+        };
+      }
+
+      const {
+        model = config.vlModel,
+        temperature = 0.7,
+        max_tokens = 2000,
+        apiKey = config.apiKey,
+      } = opts;
+
+      const payload = { model, messages, temperature, max_tokens };
+      console.log("callAI:", { model, msgCount: messages.length, roles: messages.map(m => m.role) });
+
+      const headers = { "Content-Type": "application/json" };
+      if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
+
+      const response = await fetch(config.vlApiUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        let errDetail = "";
+        try { errDetail = await response.text(); } catch (_) { errDetail = `(status ${response.status})`; }
+        // 尝试解析 JSON 错误信息
+        let errMsg = errDetail;
+        try { errMsg = JSON.parse(errDetail)?.error?.message || errMsg; } catch (_) {}
+        throw new Error(`API错误 ${response.status}: ${errMsg.slice(0, 300)}`);
+      }
+
+      return await response.json();
+    }
+
+    // ===== 构建对话上下文并调用 AI =====
+    async function callQwenVL(userMessage, options = {}) {
+      const slide = getCurrentSlideInfo();
+      const levelNames = { brief: "简单解释", example: "举例子", detailed: "详细解释" };
+      const explainLevel = levelNames[options.explainLevel] || options.explainLevel || state.lastExplainLevel;
+      const levelContracts = {
+        "简单解释": "只用1至2句直接解释核心含义，总长度不得超过80个中文字符。严禁举例、类比、假设场景和扩展知识。",
+        "举例子": "先用一句话说明核心含义，再只给出一个紧贴原文的例子。",
+        "详细解释": "使用编号步骤，从定义和前提开始，一步一步拆解推理，每一步只讲一个小点。严禁举例、类比和假设场景。",
+      };
+      const explainHint = explainLevel
+        ? `\n解释档位：${explainLevel}\n硬性要求：${levelContracts[explainLevel] || "直接回答被试问题。"}`
+        : "";
+      const systemPrompt = `你是一个认知负荷实验的阅读助手。当前材料：
+标题：${slide.title} | 领域：${slide.domain} | 难度：${slide.difficulty}
+摘要：${slide.summary}
+认知负荷：${state.load != null ? Math.round(state.load) + '/100' : '未知'}${state.load != null && state.load > 70 ? '(较高，请降低句子复杂度)' : ''}${explainHint}
+必须严格遵守所选解释档位。除“举例子”档位外，不得出现“例如、比如、譬如、举例、打个比方”等内容。可使用Markdown，但不要加入与原文无关的信息。`;
+
+      // 取最近6轮对话（12条消息），但明确把本次 userMessage 作为最后一条
+      const contextSlice = apiContext.slice(0, -1).slice(-11);
+
+      // 双重保险：强制验证交替
+      const validatedMessages = [];
+      for (let i = 0; i < contextSlice.length; i++) {
+        const msg = contextSlice[i];
+        const expectedRole = i % 2 === 0 ? "user" : "assistant";
+        if (msg.role !== expectedRole) {
+          console.warn(`apiContext alternation broken at index ${i}: expected ${expectedRole}, got ${msg.role}. Truncating.`);
+          break;
+        }
+        validatedMessages.push({ role: msg.role, content: msg.content });
+      }
+      // 确保历史部分最后一条是 assistant，避免把未完成的 user 留到上下文里
+      if (validatedMessages.length > 0 && validatedMessages[validatedMessages.length - 1].role !== "assistant") {
+        validatedMessages.pop();
+      }
+
+      let currentUserContent = userMessage;
+      if (options.includeSceneFrame) {
+        const frameResponse = await fetch(config.gazeFrameUrl, { cache: "no-store" });
+        if (!frameResponse.ok) throw new Error(`眼动场景帧不可用 (${frameResponse.status})`);
+        const frame = await frameResponse.json();
+        currentUserContent = [
+          { type: "image_url", image_url: { url: frame.data_url } },
+          { type: "text", text: `${userMessage}\nPolicy: ${JSON.stringify(options.policy || {})}\n场景帧时间: ${frame.timestamp?.utc || "unknown"}; 帧年龄: ${Math.round(frame.age_ms || 0)} ms; 眼动轨迹时间窗: ${Math.round(frame.trajectory_window_ms || 0)} ms; 有效轨迹采样数: ${frame.trajectory?.length || 0}` },
+        ];
+      }
+
+      const messages = [
+        { role: "system", content: systemPrompt },
+        ...validatedMessages,
+        { role: "user", content: currentUserContent },
+      ];
+
+      // 调用 callAI（API 逻辑与 UI 逻辑分离）
+      const maxTokens = explainLevel === "简单解释" ? 120 : explainLevel === "详细解释" ? 900 : 450;
+      const data = await callAI(messages, { max_tokens: maxTokens, temperature: 0.35 });
+      const reply = data.choices?.[0]?.message?.content || "（模型未返回有效回复）";
+      return enforceExplanationContract(reply, explainLevel);
+    }
+
+    function enforceExplanationContract(reply, explainLevel) {
+      let cleaned = String(reply || "").trim();
+      if (["简单解释", "详细解释"].includes(explainLevel)) {
+        cleaned = cleaned.replace(
+          /[^。！？\n]*(?:例如|比如|譬如|举例|打个比方|假设一个)[^。！？\n]*[。！？\n]?/g,
+          "",
+        ).trim();
+      }
+      if (explainLevel === "简单解释") {
+        cleaned = cleaned.replace(/[*_#`>-]/g, "").replace(/\s+/g, " ").trim();
+        const characters = Array.from(cleaned);
+        if (characters.length > 80) cleaned = `${characters.slice(0, 79).join("")}…`;
+      }
+      return cleaned || "当前回答未满足所选解释档位，请重新发送。";
+    }
+
+    function ensureTypingIndicator() {
+      let typing = $("chatMessages").querySelector(".typing-indicator");
+      if (!typing) {
+        typing = document.createElement("div");
+        typing.className = "typing-indicator";
+        typing.style.display = "none";
+        typing.innerHTML = '<span class="typing-spinner"></span><span>AI 正在组织回答</span>';
+        $("chatMessages").appendChild(typing);
+      }
+      return typing;
+    }
+
+    // ===== API Key 测试功能（复用 callAI）=====
+    async function testApiKey() {
+      const key = $("apiKeyInput").value.trim();
+      const model = $("vlModelSelect").value;
+      $("testApiBtn").textContent = "测试中...";
+      $("testApiBtn").disabled = true;
+
+      try {
+        const data = await callAI(
+          [{ role: "user", content: "你好，请回复'连接成功'" }],
+          { model, temperature: 0.1, max_tokens: 20, apiKey: key }
+        );
+        const reply = data.choices?.[0]?.message?.content || "(无回复)";
+        showToast("success", `✅ API连接成功！模型回复: "${reply.slice(0, 50)}"`);
+        console.log("API test success:", data);
+      } catch (err) {
+        if (err.message.includes("Failed to fetch") || err.message.includes("NetworkError") || err.message.includes("CORS")) {
+          showToast("error", `❌ 网络错误：${err.message}\n请确认已运行 python server.py`);
+        } else {
+          showToast("error", `❌ 测试失败: ${err.message}`);
+        }
+        console.error("API test error:", err);
+      }
+      $("testApiBtn").textContent = "测试连接";
+      $("testApiBtn").disabled = false;
+    }
+
+    function getCurrentSlideInfo() {
+      if (currentTrial < trialOrder.length) {
+        const slide = slides[trialOrder[currentTrial]];
+        return {
+          title: slide.title,
+          domain: slide.domain,
+          difficulty: slide.difficulty,
+          summary: slide.summary || "当前阅读材料的主要内容",
+        };
+      }
+      return {
+        title: $("slideTitle")?.textContent || "正态分布与概率密度",
+        domain: $("domainLabel")?.textContent || "数理统计",
+        difficulty: $("difficultyChip")?.textContent || "中等",
+        summary: "当前阅读材料的主要内容",
+      };
+    }
+
+    function generateFallbackResponse(question) {
+      const responses = {
+        "68-95-99.7规则": "68-95-99.7规则是正态分布的核心性质：约68%的数据在μ±1σ内，约95%在μ±2σ内，约99.7%在μ±3σ内。",
+        "Z变换的用途": "Z变换将任意正态分布标准化为Z分布(μ=0,σ=1)，公式Z=(X-μ)/σ。用于假设检验和置信区间。",
+        "给我出道练习题": "练习题：某校身高均值170cm,σ=5cm。身高>180cm概率约多少？(Z=2, P≈2.27%)",
+        "用通俗语言解释": "正态分布像钟形山：山顶=均值，宽度=标准差。σ大→矮胖山，σ小→高瘦山。",
+      };
+      return responses[question] || `关于"${question}"，请配置 Qwen VL API Key 以获得更智能的回答。`;
+    }
+    function buildDemoAIReply(messages) {
+      const lastUserMessage = [...messages].reverse().find(m => m.role === "user")?.content || "";
+      const slide = getCurrentSlideInfo();
+      const question = lastUserMessage.trim();
+
+      const canned = {
+        "核心概念": `当前材料《${slide.title}》的核心概念可以概括为：${slide.summary}`,
+        "总结要点": `要点可以直接记成一句话：${slide.summary}`,
+        "用通俗语言解释": `可以把它理解成：${slide.summary}。简单说，就是把复杂内容压缩成最关键的一层意思。`,
+        "给我出道练习题": `练习题：基于《${slide.title}》，你可以先回答一个最关键的问题：${slide.summary}。如果要我继续，我还能给你出选择题。`,
+        "讲得更清楚点": `换个更清楚的说法：${slide.summary}`,
+        "再简单一点": `再简单一点说：${slide.summary}`,
+        "为什么": `结合当前材料《${slide.title}》，原因可以这样理解：${slide.summary}`,
+      };
+
+      if (canned[question]) return canned[question];
+      if (question.includes("练习题")) {
+        return `练习题：请结合《${slide.title}》自己复述一遍核心意思。标准答案的方向是：${slide.summary}`;
+      }
+      if (question.includes("通俗") || question.includes("解释")) {
+        return `通俗地说，《${slide.title}》主要想表达的是：${slide.summary}`;
+      }
+      if (question.includes("总结") || question.includes("要点")) {
+        return `总结一下：《${slide.title}》的重点就是：${slide.summary}`;
+      }
+      if (question.includes("区别") || question.includes("对比")) {
+        return `从当前材料看，可以把它理解成“概念A更偏${slide.summary}”。如果需要，我可以继续按对比表的方式讲。`;
+      }
+      return `结合当前材料《${slide.title}》，这个问题可以先这样回答：${slide.summary}`;
+    }
+
+    /* ===== Chat Display ===== */
+    function addChatMsg(type, content) {
+      const messagesEl = $("chatMessages");
+      const typing = messagesEl.querySelector(".typing-indicator");
+
+      const row = document.createElement("div");
+      row.className = `chat-msg-row is-${type}`;
+
+      // Avatar
+      const avatar = document.createElement("div");
+      avatar.className = "chat-avatar-mini";
+      avatar.textContent = type === "ai" ? "AI" : type === "user" ? "U" : "!";
+      row.appendChild(avatar);
+
+      // Bubble with Markdown for AI, plain text for user
+      const bubble = document.createElement("div");
+      bubble.className = "chat-bubble";
+      if (type === "ai") {
+        try { bubble.innerHTML = marked.parse(content); } catch (_) { bubble.textContent = content; }
+        // 渲染 AI 回复中的 LaTeX 公式
+        renderMathInElement(bubble);
+      } else {
+        bubble.textContent = content;
+      }
+      row.appendChild(bubble);
+
+      if (typing) {
+        messagesEl.insertBefore(row, typing);
+      } else {
+        messagesEl.appendChild(row);
+      }
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    /* ===== Researcher Setup Panel Toggle ===== */
+    function openResearcherPanel() {
+      // 回填已有配置到表单
+      if (config.bciServer) $("bciServer").value = config.bciServer;
+      if (config.apiKey) $("apiKeyInput").value = config.apiKey;
+      if (config.vlModel) $("vlModelSelect").value = config.vlModel;
+      if ($("showDiffToggle")) $("showDiffToggle").checked = $("diffDomainCard")?.style.display !== "none";
+      $("researcherOverlay").classList.add("is-open");
+    }
+    function closeResearcherPanel() {
+      $("researcherOverlay").classList.remove("is-open");
+    }
+    $("setupToggleBtn").addEventListener("click", openResearcherPanel);
+    $("setupCloseBtn").addEventListener("click", closeResearcherPanel);
+
+    // ===== API Config Banner (intro page) =====
+    function updateApiConfigBanner() {
+      // Banner removed from UI; this function is kept as a no-op for backward compatibility
+    }
+    // 不自动打开研究者设置，保持前端首屏简洁
+
+    $("setupSaveBtn").addEventListener("click", () => {
+      // Read and save config
+      config.bciServer = $("bciServer").value.trim().replace(/\/$/, "");
+      config.apiKey = $("apiKeyInput").value.trim();
+      config.vlModel = $("vlModelSelect").value;
+      // Researcher display options
+      const showDiff = $("showDiffToggle").checked;
+      $("diffDomainCard").style.display = showDiff ? "" : "none";
+      console.log("Config saved:", { bci: config.bciServer || "(default)", ai: config.apiKey ? `${config.apiKey.slice(0,8)}...` : "(未配置)", model: config.vlModel, showDiff });
+      showToast("success", "研究者配置已保存");
+      // Update the intro-page banner
+      closeResearcherPanel();
+      // Re-check AI status if we're already on main page
+      if (state.currentPage === "main") updateAiStatus();
+    });
+    // Also save config when clicking overlay backdrop
+    $("researcherOverlay").addEventListener("click", (e) => {
+      if (e.target === $("researcherOverlay")) closeResearcherPanel();
+    });
+    // Keyboard shortcut: Ctrl+Shift+S to open researcher panel
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "S") {
+        e.preventDefault();
+        openResearcherPanel();
+      }
+    });
+
+
+
+
+    /* ===== Trial Data (48 slides; each Condition gets 2 low + 2 medium + 2 high) ===== */
+    /* ===== Trial Selection ===== */
+    const TOTAL_QUESTIONS = 48;
+    const CONDITION_COUNT = 3;
+    const PER_DIFFICULTY_PER_CONDITION = 2;
+    const lowIdx = slides.map((s, i) => i).filter(i => slides[i].difficulty === '低');
+    const midIdx = slides.map((s, i) => i).filter(i => slides[i].difficulty === '中');
+    const highIdx = slides.map((s, i) => i).filter(i => slides[i].difficulty === '高');
+
+    function shuffleArray(values) {
+      const shuffled = [...values];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function buildBalancedTrialOrder() {
+      const requiredPerDifficulty = CONDITION_COUNT * PER_DIFFICULTY_PER_CONDITION;
+      const difficultyPools = [lowIdx, midIdx, highIdx].map((pool) => {
+        if (pool.length < requiredPerDifficulty) {
+          throw new Error(`题库数量不足：每个难度至少需要 ${requiredPerDifficulty} 道题`);
+        }
+        return shuffleArray(pool).slice(0, requiredPerDifficulty);
+      });
+
+      const conditionBlocks = [];
+      for (let blockIndex = 0; blockIndex < CONDITION_COUNT; blockIndex++) {
+        const start = blockIndex * PER_DIFFICULTY_PER_CONDITION;
+        const end = start + PER_DIFFICULTY_PER_CONDITION;
+        const balancedBlock = difficultyPools.flatMap((pool) => pool.slice(start, end));
+        conditionBlocks.push(shuffleArray(balancedBlock));
+      }
+
+      const order = conditionBlocks.flat();
+      validateBalancedTrialOrder(order);
+      return order;
+    }
+
+    function validateBalancedTrialOrder(order) {
+      const questionsPerCondition = PER_DIFFICULTY_PER_CONDITION * 3;
+      if (order.length !== CONDITION_COUNT * questionsPerCondition) {
+        throw new Error(`试次数量错误：应为 ${CONDITION_COUNT * questionsPerCondition} 题`);
+      }
+      if (new Set(order).size !== order.length) {
+        throw new Error("试次生成错误：同一道题被重复抽取");
+      }
+
+      for (let blockIndex = 0; blockIndex < CONDITION_COUNT; blockIndex++) {
+        const block = order.slice(
+          blockIndex * questionsPerCondition,
+          (blockIndex + 1) * questionsPerCondition,
+        );
+        const counts = { "低": 0, "中": 0, "高": 0 };
+        block.forEach((slideIndex) => counts[slides[slideIndex].difficulty]++);
+        if (counts["低"] !== 2 || counts["中"] !== 2 || counts["高"] !== 2) {
+          throw new Error(`Condition 区块 ${blockIndex + 1} 的难度分配不平衡`);
+        }
+      }
+    }
+
+    let trialOrder = buildBalancedTrialOrder();
+    let currentTrial = 0;
+
+    /* ===== Utility Functions ===== */
+    function recordLoadByDifficulty(loadValue) {
+      if (currentTrial >= trialOrder.length) return;
+      const slide = slides[trialOrder[currentTrial]];
+      const diff = slide.difficulty === "低" ? "low" : slide.difficulty === "中" ? "moderate" : "high";
+    }
+    function updateDataPanelStatus() {
+      const completed = experimentData.trials.length;
+      const samples = experimentData.trials.reduce((s, t) => s + (t.loadSamples?.length || 0), 0);
+      $("dataTrialCount").textContent = completed;
+      $("dataLoadSamples").textContent = samples;
+      $("dataChatCount").textContent = experimentData.trials.reduce((s, t) => s + (t.chatMessages?.length || 0), 0);
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) { $("dataStorageStatus").textContent = "OK"; $("dataStorageSize").textContent = Math.round(stored.length / 1024) + " KB"; }
+      } catch (_) {}
+    }
+    function openQuestionnaire() { navigateTo("questionnaire"); }
+    function rateLikert(btn, groupId) {
+      document.querySelectorAll(`#${groupId} .likert-btn`).forEach(b => b.classList.remove("is-selected"));
+      btn.classList.add("is-selected");
+    }
+    $("dataBtn").addEventListener("click", () => { openModal("dataModal"); drawEEGWaveform(); drawLoadTimeline(); updateDataPanelStatus(); });
+
+    /* ===== Keyboard & Fullscreen ===== */
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "F10" && !e.repeat && state.currentPage === "main" && !state.inQuiz) {
+        e.preventDefault();
+        manualPolicyTrigger();
+        return;
+      }
+      if (e.ctrlKey && (e.key === "k" || e.key === "K")) {
+        if (state.currentPage === "calibration" && typeof finishCalibration === "function") {
+          e.preventDefault(); finishCalibration();
+        }
+      }
+      if (state.currentPage !== "main") return;
+      if (e.key === "ArrowRight") $("nextBtn").click();
+    });
+    document.addEventListener("dblclick", () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+    });
+    $("fullscreenBtn").addEventListener("click", () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen();
+    });
+    document.querySelectorAll(".modal-overlay").forEach(overlay => {
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay && overlay.id !== "restModal") overlay.classList.remove("is-open");
+      });
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        document.querySelectorAll(".modal-overlay.is-open").forEach(m => {
+          if (m.id !== "restModal") m.classList.remove("is-open");
+        });
+      }
+    });
+
+    /* ===== EEG Canvas ===== */
+    function drawEEGWaveform() {
+      const canvas = $("eegCanvas"); if (!canvas) return;
+      const ctx = canvas.getContext("2d"); const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fbfcfd"; ctx.fillRect(0, 0, w, h);
+      const channels = ["P3", "P4", "PZ", "O1", "O2"];
+      const colors = ["#12846f", "#245f9f", "#6b57a8", "#b56e09", "#c83f34"];
+      const offsets = [0.2, 0.4, 0.6, 0.75, 0.9];
+      channels.forEach((ch, i) => {
+        ctx.strokeStyle = colors[i]; ctx.lineWidth = 1.8; ctx.beginPath();
+        for (let x = 0; x < w; x++) {
+          const y = h * offsets[i] + Math.sin(x * 0.08 + i * 2) * 18 + Math.sin(x * 0.22 + i) * 8 + Math.random() * 4;
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke(); ctx.fillStyle = colors[i]; ctx.font = "700 10px Segoe UI"; ctx.fillText(ch, 6, h * offsets[i] - 10);
+      });
+    }
+    function drawLoadTimeline() {
+      const canvas = $("loadTimelineCanvas"); if (!canvas) return;
+      const ctx = canvas.getContext("2d"); const w = canvas.width, h = canvas.height;
+      const pad = { left: 34, right: 12, top: 12, bottom: 24 };
+      const cw = w - pad.left - pad.right, ch = h - pad.top - pad.bottom;
+      const yFor = (v) => pad.top + ch - (Math.max(0, Math.min(100, v)) / 100) * ch;
+      ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fbfcfd"; ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = "rgba(18,132,111,0.12)"; ctx.fillRect(pad.left, yFor(30), cw, yFor(0) - yFor(30));
+      ctx.fillStyle = "rgba(181,110,9,0.15)"; ctx.fillRect(pad.left, yFor(70), cw, yFor(30) - yFor(70));
+      ctx.fillStyle = "rgba(200,63,52,0.14)"; ctx.fillRect(pad.left, yFor(100), cw, yFor(70) - yFor(100));
+      ctx.strokeStyle = "#d7e0e7"; ctx.lineWidth = 1;
+      [0, 50, 100].forEach(tick => {
+        ctx.beginPath(); ctx.moveTo(pad.left, yFor(tick)); ctx.lineTo(w - pad.right, yFor(tick)); ctx.stroke();
+        ctx.fillStyle = "#657586"; ctx.font = "12px Segoe UI"; ctx.fillText(String(tick), 8, yFor(tick) + 4);
+      });
+      ctx.strokeStyle = "#c83f34"; ctx.setLineDash([5, 4]);
+      ctx.beginPath(); ctx.moveTo(pad.left, yFor(70)); ctx.lineTo(w - pad.right, yFor(70)); ctx.stroke();
+      ctx.setLineDash([]);
+      const simData = [];
+      for (let i = 0; i < 60; i++) simData.push({ load: 35 + Math.sin(i * 0.15) * 25 + Math.random() * 10 });
+      ctx.lineWidth = 3; ctx.strokeStyle = "#245f9f"; ctx.beginPath();
+      const xFor = (i, n) => pad.left + (n <= 1 ? cw : (i / (n - 1)) * cw);
+      simData.forEach((pt, i) => { const x = xFor(i, simData.length); const y = yFor(pt.load); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+      ctx.stroke();
+      simData.forEach((pt, i) => { const x = xFor(i, simData.length); const y = yFor(pt.load); ctx.fillStyle = "#12846f"; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); });
+    }
+
+    /* ===== Initialize ===== */
+    if (new URLSearchParams(window.location.search).get("screenMappingTest") === "1") {
+      navigateTo("main");
+      $("explainButtons").style.display = "flex";
+      loadTrial(0);
+      startDataPolling();
+    } else {
+      navigateTo("intro");
+      validateStart();
+    }
+  </script>
+</body>
+</html>

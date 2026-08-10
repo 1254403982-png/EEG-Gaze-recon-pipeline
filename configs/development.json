@@ -1,0 +1,110 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8810
+  },
+  "synchronization": {
+    "max_eeg_age_ms": 2500,
+    "max_gaze_age_ms": 1500
+  },
+  "policy": {
+    "c3_policy_version": "v1",
+    "cooldown_seconds": 8.0,
+    "required_confirmations": 2,
+    "minimum_evidence_seconds": 0.20,
+    "minimum_trial_seconds": 20.0,
+    "max_automatic_offers_per_trial": 0,
+    "allow_degraded_c3": true,
+    "require_screen_mapping": true,
+    "gaze_min_valid_ratio": 0.50,
+    "max_multimodal_skew_ms": 500,
+    "require_joint_c3_evidence": true,
+    "brief_threshold": 40,
+    "example_threshold": 60,
+    "detailed_threshold": 80,
+    "eeg_weight": 0.60,
+    "gaze_weight": 0.40,
+    "gaze_pupil_weight": 0.0,
+    "gaze_entropy_weight": 0.35,
+    "gaze_fixation_weight": 0.65,
+    "gaze_blink_weight": 0.0,
+    "fixation_reference_ms": 1000,
+    "eye_baseline_seconds": 5.0,
+    "eye_baseline_min_samples": 5,
+    "eye_dwell_weight": 0.40,
+    "eye_fixation_weight": 0.30,
+    "eye_duration_weight": 0.30,
+    "eye_revisit_count_weight": 0.15,
+    "eye_revisit_time_weight": 0.15,
+    "eye_abnormal_ratio": 1.20,
+    "eye_single_feature_ratio": 1.55,
+    "eye_mild_threshold": 1.30,
+    "eye_moderate_threshold": 1.35,
+    "eye_strong_threshold": 1.85,
+    "eeg_medium_threshold": 50,
+    "eeg_high_threshold": 80,
+    "attention_low_threshold": 40
+  },
+  "eeg": {
+    "sampling_rate_hz": 250,
+    "window_seconds": 4,
+    "max_buffer_seconds": 90,
+    "bandpass_low_hz": 1,
+    "bandpass_high_hz": 45,
+    "primary_decoder": "cognitive_workload",
+    "quality": {
+      "line_frequency_hz": 50,
+      "line_bandwidth_hz": 2,
+      "line_power_threshold": 10,
+      "high_frequency_low_hz": 20,
+      "high_frequency_high_hz": 40,
+      "high_frequency_power_threshold": 30,
+      "extreme_amplitude_threshold": 100,
+      "extreme_seconds_threshold": 2,
+      "max_bad_channel_ratio": 0.45
+    },
+    "decoders": [
+      {
+        "id": "cognitive_workload",
+        "type": "cognitive_workload",
+        "channels": ["FZ", "F3", "F4", "FC1", "FC2", "P3", "P4", "P7", "P8", "PZ", "O1", "O2"],
+        "options": {
+          "frontal_channels": ["FZ", "F3", "F4", "FC1", "FC2"],
+          "posterior_channels": ["P3", "P4", "P7", "P8", "PZ", "O1", "O2"],
+          "theta_low_hz": 4,
+          "theta_high_hz": 7,
+          "alpha_low_hz": 8,
+          "alpha_high_hz": 13,
+          "min_good_frontal_channels": 2,
+          "min_good_posterior_channels": 3,
+          "max_bad_channel_ratio": 0.45,
+          "baseline_history_size": 600
+        }
+      }
+    ],
+    "brainco": {
+      "address": "",
+      "port": 0,
+      "auto_discover": true,
+      "scan_timeout_seconds": 6,
+      "ready_timeout_seconds": 10,
+      "start_retries": 2,
+      "gain": 6,
+      "signal_source": "NORMAL",
+      "enable_imu": false,
+      "device_id": "eeg-cap"
+    }
+  },
+  "storage": {
+    "run_dir": "runs",
+    "raw_eeg_chunk_seconds": 10.0,
+    "recording_starts_at": "calibration"
+  },
+  "llm": {
+    "enabled": true,
+    "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+    "api_key_env": "DASHSCOPE_API_KEY",
+    "default_model": "qwen-vl-max",
+    "timeout_seconds": 60
+  }
+}
