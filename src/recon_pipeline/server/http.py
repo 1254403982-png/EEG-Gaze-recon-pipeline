@@ -47,6 +47,7 @@ class ExperimentHTTPServer:
         tobii_calibration_supplier: Optional[Callable[[], Dict[str, Any]]] = None,
         tobii_calibration_starter: Optional[Callable[[], Dict[str, Any]]] = None,
         question_registry: Optional[ExperimentRunManager] = None,
+        eeg_acquisition_enabled: Optional[bool] = None,
     ) -> None:
         self.application = application
         self.static_root = (
@@ -62,6 +63,7 @@ class ExperimentHTTPServer:
         self.tobii_calibration_supplier = tobii_calibration_supplier
         self.tobii_calibration_starter = tobii_calibration_starter
         self.question_registry = question_registry
+        self.eeg_acquisition_enabled = eeg_acquisition_enabled
         self._server = _ExclusiveThreadingHTTPServer((host, port), self._handler())
         self._thread: Optional[threading.Thread] = None
 
@@ -96,6 +98,7 @@ class ExperimentHTTPServer:
         tobii_calibration_supplier = self.tobii_calibration_supplier
         tobii_calibration_starter = self.tobii_calibration_starter
         question_registry = self.question_registry
+        eeg_acquisition_enabled = self.eeg_acquisition_enabled
 
         class Handler(BaseHTTPRequestHandler):
             def do_OPTIONS(self) -> None:
@@ -115,7 +118,10 @@ class ExperimentHTTPServer:
                 elif route.startswith("/ui/"):
                     self._serve_static(unquote(route[len("/ui/") :]))
                 elif route == "/api/health":
-                    self._send(HTTPStatus.OK, _health_payload(app))
+                    self._send(
+                        HTTPStatus.OK,
+                        _health_payload(app, eeg_acquisition_enabled=eeg_acquisition_enabled),
+                    )
                 elif route == "/api/state":
                     self._send(HTTPStatus.OK, app.snapshot())
                 elif route == "/api/policy":
@@ -422,7 +428,11 @@ class ExperimentHTTPServer:
         return Handler
 
 
-def _health_payload(app: ExperimentApplication) -> Dict[str, Any]:
+def _health_payload(
+    app: ExperimentApplication,
+    *,
+    eeg_acquisition_enabled: Optional[bool] = None,
+) -> Dict[str, Any]:
     state = app.synchronizer.snapshot()
     eeg_connected = state.eeg.status in {SignalStatus.AVAILABLE, SignalStatus.WARNING}
     gaze_connected = state.gaze.status in {SignalStatus.AVAILABLE, SignalStatus.WARNING}
@@ -431,10 +441,16 @@ def _health_payload(app: ExperimentApplication) -> Dict[str, Any]:
         "status": "running",
         "session_id": state.session_id,
         "condition": state.condition,
+        "eeg_acquisition_enabled": eeg_acquisition_enabled,
         "eeg_connected": eeg_connected,
         "gaze_connected": gaze_connected,
         "eyetracker_connected": gaze_connected,
         "eeg_quality": state.eeg.quality,
+        "eeg_reason": (
+            "eeg_acquisition_disabled"
+            if eeg_acquisition_enabled is False
+            else state.eeg.metadata.get("reason")
+        ),
         "gaze_quality": state.gaze.quality,
         "message": (f"EEG {state.eeg.status.value} · Gaze {state.gaze.status.value}"),
     }

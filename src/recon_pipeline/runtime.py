@@ -25,12 +25,20 @@ class EEGAcquisitionWorker:
         processor: Optional[OnlineEEGProcessor] = None,
         raw_recorder: Optional[RawEEGRecorder] = None,
         idle_seconds: float = 0.02,
+        stall_timeout_seconds: float = 3.0,
+        reconnect_delay_seconds: float = 2.0,
     ) -> None:
+        if stall_timeout_seconds <= 0:
+            raise ValueError("stall_timeout_seconds must be positive.")
+        if reconnect_delay_seconds < 0:
+            raise ValueError("reconnect_delay_seconds must not be negative.")
         self.source = source
         self.application = application
         self.processor = processor or OnlineEEGProcessor()
         self.raw_recorder = raw_recorder
         self.idle_seconds = idle_seconds
+        self.stall_timeout_seconds = float(stall_timeout_seconds)
+        self.reconnect_delay_seconds = float(reconnect_delay_seconds)
         self._stop = threading.Event()
         self._thread: Optional[threading.Thread] = None
         self._processor_session_id: Optional[str] = None
@@ -58,11 +66,28 @@ class EEGAcquisitionWorker:
 
     def _run(self) -> None:
         try:
+            last_chunk_at = time.monotonic()
             while not self._stop.is_set():
-                chunk = self.source.read()
-                if chunk is None:
-                    time.sleep(self.idle_seconds)
+                try:
+                    chunk = self.source.read()
+                except Exception as exc:
+                    self._reconnect_source(exc)
+                    last_chunk_at = time.monotonic()
                     continue
+                if chunk is None:
+                    stalled_for = time.monotonic() - last_chunk_at
+                    if stalled_for >= self.stall_timeout_seconds:
+                        self._reconnect_source(
+                            TimeoutError(
+                                "BrainCo produced no EEG samples for "
+                                f"{stalled_for:.1f} seconds"
+                            )
+                        )
+                        last_chunk_at = time.monotonic()
+                    else:
+                        self._stop.wait(self.idle_seconds)
+                    continue
+                last_chunk_at = time.monotonic()
                 context = self.application.recording_context()
                 self._reset_processor_for_session(str(context["session_id"]))
                 if self.raw_recorder is not None:
@@ -84,6 +109,35 @@ class EEGAcquisitionWorker:
             if self.raw_recorder is not None:
                 self.raw_recorder.close()
             self.source.stop()
+
+    def _reconnect_source(self, reason: Exception) -> None:
+        if self._stop.is_set():
+            return
+        self.last_error = reason
+        LOGGER.warning("EEG stream interrupted; reconnecting: %s", reason)
+        if self.raw_recorder is not None:
+            self.raw_recorder.flush()
+        # Never analyze one window containing samples from both sides of a data gap.
+        self.processor.reset()
+        try:
+            self.source.stop()
+        except Exception as exc:
+            LOGGER.warning("Failed to stop interrupted EEG source cleanly: %s", exc)
+        if self._stop.is_set():
+            return
+        try:
+            self.source.start()
+        except Exception as exc:
+            self.last_error = exc
+            LOGGER.exception(
+                "EEG reconnect attempt failed; retrying in %.1f seconds: %s",
+                self.reconnect_delay_seconds,
+                exc,
+            )
+            self._stop.wait(self.reconnect_delay_seconds)
+            return
+        self.last_error = None
+        LOGGER.info("EEG stream reconnected; waiting for a fresh analysis window")
 
     def _reset_processor_for_session(self, session_id: str) -> None:
         if session_id == self._processor_session_id:

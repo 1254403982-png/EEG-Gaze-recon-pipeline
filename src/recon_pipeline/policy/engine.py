@@ -181,6 +181,7 @@ class MultimodalPolicyEngine:
             state.gaze.eye,
             self._eye_baseline,
             self.config,
+            condition=state.condition,
         )
         score = eye_score
         level = eye_level
@@ -238,10 +239,11 @@ class MultimodalPolicyEngine:
                 }
 
         target_aoi = state.gaze.primary_aoi
+        offer_limit = _offer_limit(self.config, state.condition)
         if (
             level != "none"
-            and self.config.max_automatic_offers_per_trial > 0
-            and self._trial_offer_count >= self.config.max_automatic_offers_per_trial
+            and offer_limit > 0
+            and self._trial_offer_count >= offer_limit
         ):
             return self._decision(
                 state,
@@ -258,9 +260,7 @@ class MultimodalPolicyEngine:
                 component_scores={
                     **component_scores,
                     "trial_offer_count": float(self._trial_offer_count),
-                    "trial_offer_limit": float(
-                        self.config.max_automatic_offers_per_trial
-                    ),
+                    "trial_offer_limit": float(offer_limit),
                 },
                 suppressed=True,
             )
@@ -390,7 +390,8 @@ class MultimodalPolicyEngine:
             )
 
         is_escalation = _SEVERITY[level] > _SEVERITY[self._last_emitted_level]
-        cooling_down = now - self._last_emitted_at < self.config.cooldown_seconds
+        cooldown_seconds = _cooldown_seconds(self.config, state.condition)
+        cooling_down = now - self._last_emitted_at < cooldown_seconds
         if is_escalation and cooling_down:
             return self._decision(
                 state,
@@ -435,7 +436,7 @@ class MultimodalPolicyEngine:
             component_scores = {
                 **(component_scores or {}),
                 "trial_offer_count": float(self._trial_offer_count),
-                "trial_offer_limit": float(self.config.max_automatic_offers_per_trial),
+                "trial_offer_limit": float(_offer_limit(self.config, state.condition)),
             }
         reasons.append("difficulty_score_%.1f" % score)
         return self._decision(
@@ -521,11 +522,48 @@ def _eye_complete(eye: EyeFeatures) -> bool:
     )
 
 
+def _eye_thresholds(
+    config: PolicyConfig, condition: int
+) -> Tuple[float, float, float, float, float]:
+    if condition == 2 and config.c2_eye_mild_threshold is not None:
+        return (
+            float(config.c2_eye_abnormal_ratio),
+            float(config.c2_eye_single_feature_ratio),
+            float(config.c2_eye_mild_threshold),
+            float(config.c2_eye_moderate_threshold),
+            float(config.c2_eye_strong_threshold),
+        )
+    return (
+        config.eye_abnormal_ratio,
+        config.eye_single_feature_ratio,
+        config.eye_mild_threshold,
+        config.eye_moderate_threshold,
+        config.eye_strong_threshold,
+    )
+
+
+def _offer_limit(config: PolicyConfig, condition: int) -> int:
+    if condition == 2 and config.c2_max_automatic_offers_per_trial is not None:
+        return int(config.c2_max_automatic_offers_per_trial)
+    return int(config.max_automatic_offers_per_trial)
+
+
+def _cooldown_seconds(config: PolicyConfig, condition: int) -> float:
+    if condition == 2 and config.c2_cooldown_seconds is not None:
+        return float(config.c2_cooldown_seconds)
+    return float(config.cooldown_seconds)
+
+
 def _eye_difficulty(
     eye: EyeFeatures,
     baseline: EyeFeatures,
     config: PolicyConfig,
+    *,
+    condition: int = 3,
 ) -> Tuple[float, str, Dict[str, float], List[str]]:
+    abnormal_ratio, single_ratio, mild, moderate, strong = _eye_thresholds(
+        config, condition
+    )
     assert _eye_complete(eye) and _eye_complete(baseline)
     dwell_ratio = float(eye.aoi_dwell_time) / float(baseline.aoi_dwell_time)
     fixation_ratio = float(eye.fixation_count) / float(baseline.fixation_count)
@@ -573,32 +611,32 @@ def _eye_difficulty(
         )
     total_weight = sum(weight for weight, _ in weighted_components)
     score = sum(weight * value for weight, value in weighted_components) / total_weight
-    abnormal = [name for name, value in ratios.items() if value >= config.eye_abnormal_ratio]
+    abnormal = [name for name, value in ratios.items() if value >= abnormal_ratio]
     core_abnormal = [
-        name for name, value in core_ratios.items() if value >= config.eye_abnormal_ratio
+        name for name, value in core_ratios.items() if value >= abnormal_ratio
     ]
-    single_feature_trigger = max(core_ratios.values()) >= config.eye_single_feature_ratio
+    single_feature_trigger = max(core_ratios.values()) >= single_ratio
     revisit_abnormal = [
         name
         for name in ratios
-        if name.startswith("aoi_revisit_") and ratios[name] >= config.eye_abnormal_ratio
+        if name.startswith("aoi_revisit_") and ratios[name] >= abnormal_ratio
     ]
     repeated_evidence = len(core_abnormal) >= 2 or (
         bool(core_abnormal) and bool(revisit_abnormal)
     )
-    if score >= config.eye_strong_threshold:
+    if score >= strong:
         level = "detailed"
-    elif score >= config.eye_moderate_threshold and (repeated_evidence or single_feature_trigger):
+    elif score >= moderate and (repeated_evidence or single_feature_trigger):
         level = "example"
     # A single mildly abnormal fixation/dwell ratio is too noisy for an
     # automatic "brief" prompt. Require either two core indicators or a
     # core indicator corroborated by revisit evidence.
-    elif score >= config.eye_mild_threshold and repeated_evidence:
+    elif score >= mild and repeated_evidence:
         level = "brief"
     else:
         level = "none"
     reasons = ["eye_ratio_%s" % name for name in abnormal]
-    if single_feature_trigger and score < config.eye_mild_threshold:
+    if single_feature_trigger and score < mild:
         reasons.append("eye_single_feature_spike")
     reasons.append("eye_%s" % (level if level != "none" else "near_personal_baseline"))
     components = {
@@ -607,6 +645,11 @@ def _eye_difficulty(
         "baseline_aoi_dwell_time": float(baseline.aoi_dwell_time),
         "baseline_fixation_count": float(baseline.fixation_count),
         "baseline_mean_fixation_duration": float(baseline.mean_fixation_duration),
+        "eye_abnormal_ratio_threshold": float(abnormal_ratio),
+        "eye_single_feature_ratio_threshold": float(single_ratio),
+        "eye_mild_threshold": float(mild),
+        "eye_moderate_threshold": float(moderate),
+        "eye_strong_threshold": float(strong),
     }
     if revisit_available:
         components.update(

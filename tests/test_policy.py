@@ -161,6 +161,36 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(decision.explanation_level, "none")
         self.assertNotIn("eye_single_feature_spike", decision.reason_codes)
 
+    def test_c2_specific_lower_threshold_does_not_change_c3_eye_threshold(self):
+        engine = MultimodalPolicyEngine(
+            policy_config(
+                eye_abnormal_ratio=1.25,
+                eye_mild_threshold=1.35,
+                eye_moderate_threshold=1.55,
+                eye_strong_threshold=2.0,
+                c2_eye_abnormal_ratio=1.20,
+                c2_eye_single_feature_ratio=1.70,
+                c2_eye_mild_threshold=1.15,
+                c2_eye_moderate_threshold=1.55,
+                c2_eye_strong_threshold=2.0,
+            )
+        )
+        prime_baseline(engine)
+        c2 = engine.evaluate(
+            state(2, gaze_value=eye_gaze(1.2, 3, 0.2, timestamp_ns=2_000_000_000))
+        )
+
+        engine.reset()
+        prime_baseline(engine, 3, eeg(20))
+        c3 = engine.evaluate(
+            state(3, eeg(20), eye_gaze(1.2, 3, 0.2, timestamp_ns=2_000_000_000))
+        )
+
+        self.assertEqual(c2.explanation_level, "brief")
+        self.assertEqual(c2.component_scores["eye_mild_threshold"], 1.15)
+        self.assertEqual(c3.explanation_level, "none")
+        self.assertEqual(c3.component_scores["eye_mild_threshold"], 1.35)
+
     def test_c3_case_1_eye_and_eeg_normal(self):
         prime_baseline(self.engine, 3, eeg(20))
         decision = self.engine.evaluate(

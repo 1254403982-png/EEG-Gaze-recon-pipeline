@@ -1,5 +1,6 @@
 import json
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 
@@ -36,6 +37,61 @@ class EEGAcquisitionWorkerTests(unittest.TestCase):
         worker._reset_processor_for_session("participant-001")
 
         self.assertEqual(processor.reset_count, 2)
+
+    def test_stalled_source_is_flushed_and_reconnected(self):
+        reconnected = threading.Event()
+
+        class StalledSource:
+            def __init__(self):
+                self.start_count = 0
+                self.stop_count = 0
+
+            def start(self):
+                self.start_count += 1
+                if self.start_count >= 2:
+                    reconnected.set()
+
+            def read(self):
+                return None
+
+            def stop(self):
+                self.stop_count += 1
+
+        class Recorder:
+            def __init__(self):
+                self.flush_count = 0
+
+            def flush(self):
+                self.flush_count += 1
+                return []
+
+            def close(self):
+                return []
+
+        source = StalledSource()
+        recorder = Recorder()
+        processor = _Processor()
+        worker = EEGAcquisitionWorker(
+            source,
+            object(),
+            processor=processor,
+            raw_recorder=recorder,
+            idle_seconds=0.001,
+            stall_timeout_seconds=0.02,
+            reconnect_delay_seconds=0.001,
+        )
+
+        try:
+            worker.start()
+            self.assertTrue(reconnected.wait(1.0), "EEG watchdog did not reconnect")
+        finally:
+            worker.stop()
+
+        self.assertGreaterEqual(source.start_count, 2)
+        self.assertGreaterEqual(source.stop_count, 1)
+        self.assertGreaterEqual(recorder.flush_count, 1)
+        self.assertGreaterEqual(processor.reset_count, 1)
+        self.assertIsNone(worker.last_error)
 
 
 class _RawGazeProvider:

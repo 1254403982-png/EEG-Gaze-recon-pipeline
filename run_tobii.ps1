@@ -6,11 +6,16 @@ param(
     [switch]$TobiiGazeOnly,
     [string]$Python = "",
     [switch]$BrainCo,
+    [switch]$NoBrainCo,
     [switch]$C3PolicyV2
 )
 
 $ErrorActionPreference = "Stop"
 $ProjectRoot = $PSScriptRoot
+
+if ($BrainCo -and $NoBrainCo) {
+    throw "Use either -BrainCo or -NoBrainCo, not both."
+}
 
 if ($C3PolicyV2) {
     if ($PSBoundParameters.ContainsKey("Config")) {
@@ -71,7 +76,9 @@ if ($TobiiGazeOnly) {
     $Arguments += "--tobii-gaze-only"
 }
 
-if ($BrainCo) {
+# Formal runs require EEG, so BrainCo is enabled by default.  Keep -BrainCo as
+# a backwards-compatible explicit flag and require -NoBrainCo for diagnostics.
+if (-not $NoBrainCo) {
     $Arguments += "--brainco"
 }
 

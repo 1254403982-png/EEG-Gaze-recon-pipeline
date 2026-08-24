@@ -20,6 +20,7 @@ from ..acquisition.base import RawEEGChunk
 LOGGER = logging.getLogger(__name__)
 RAW_EEG_SCHEMA_VERSION = "1.0"
 _SAFE_NAME = re.compile(r"[^A-Za-z0-9_.-]+")
+_CHUNK_NAME = re.compile(r"^chunk_(\d{6,})\.npz$")
 
 
 @dataclass
@@ -219,36 +220,48 @@ class RawEEGRecorder:
                 directory = self.root / f"{safe_session}_{self._recording_stamp}_{suffix:02d}"
                 suffix += 1
         chunks_directory = directory / "chunks"
-        chunks_directory.mkdir(parents=True)
+        chunks_directory.mkdir(parents=True, exist_ok=True)
+        manifest_path = directory / "manifest.jsonl"
+        metadata_path = directory / "metadata.json"
+        next_chunk_index = _next_chunk_index(manifest_path, chunks_directory)
         files = _SessionFiles(
             directory=directory,
             chunks_directory=chunks_directory,
-            manifest_path=directory / "manifest.jsonl",
+            manifest_path=manifest_path,
+            next_chunk_index=next_chunk_index,
         )
         self._sessions[session_id] = files
 
         channels, sampling_rate_hz, source, dtype = signature
-        _write_json_atomic(
-            directory / "metadata.json",
-            {
-                "schema_version": RAW_EEG_SCHEMA_VERSION,
-                "format": "chunked_npz",
-                "session_id": session_id,
-                "recording_started_at": _utc_now_iso(),
-                "sample_values": "device-native acquisition values before mapping or filtering",
-                "host_sample_time_basis": (
-                    "reconstructed_backwards_from_chunk_receive_time_and_sampling_rate"
-                ),
-                "initial_channel_names": list(channels),
-                "initial_sampling_rate_hz": sampling_rate_hz,
-                "initial_source": source,
-                "initial_dtype": dtype,
-                "configured_chunk_seconds": self.chunk_seconds,
-                "manifest": "manifest.jsonl",
-                "chunks_directory": "chunks",
-            },
-        )
-        LOGGER.info("Raw EEG recording started: %s", directory)
+        if metadata_path.exists():
+            _validate_existing_metadata(metadata_path, session_id)
+            LOGGER.info(
+                "Raw EEG recording resumed at chunk %s: %s",
+                next_chunk_index,
+                directory,
+            )
+        else:
+            _write_json_atomic(
+                metadata_path,
+                {
+                    "schema_version": RAW_EEG_SCHEMA_VERSION,
+                    "format": "chunked_npz",
+                    "session_id": session_id,
+                    "recording_started_at": _utc_now_iso(),
+                    "sample_values": "device-native acquisition values before mapping or filtering",
+                    "host_sample_time_basis": (
+                        "reconstructed_backwards_from_chunk_receive_time_and_sampling_rate"
+                    ),
+                    "initial_channel_names": list(channels),
+                    "initial_sampling_rate_hz": sampling_rate_hz,
+                    "initial_source": source,
+                    "initial_dtype": dtype,
+                    "configured_chunk_seconds": self.chunk_seconds,
+                    "manifest": "manifest.jsonl",
+                    "chunks_directory": "chunks",
+                },
+            )
+            LOGGER.info("Raw EEG recording started: %s", directory)
         return files
 
     def _flush_locked(self) -> Optional[Path]:
@@ -354,6 +367,57 @@ def _safe_component(value: str) -> str:
         return safe
     digest = hashlib.sha256(value.encode("utf-8")).hexdigest()[:10]
     return f"session_{digest}"
+
+
+def _next_chunk_index(manifest_path: Path, chunks_directory: Path) -> int:
+    """Return a collision-free index when reopening an existing recording."""
+
+    indices: list[int] = []
+    if manifest_path.exists():
+        if not manifest_path.is_file():
+            raise RuntimeError(f"Raw EEG manifest is not a file: {manifest_path}")
+        for line_number, line in enumerate(
+            manifest_path.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+                indices.append(int(entry["chunk_index"]))
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+                raise RuntimeError(
+                    f"Invalid raw EEG manifest entry at {manifest_path}:{line_number}"
+                ) from exc
+
+    for path in chunks_directory.iterdir():
+        match = _CHUNK_NAME.fullmatch(path.name)
+        if match and path.is_file():
+            indices.append(int(match.group(1)))
+    return max(indices, default=-1) + 1
+
+
+def _validate_existing_metadata(path: Path, session_id: str) -> None:
+    if not path.is_file():
+        raise RuntimeError(f"Raw EEG metadata is not a file: {path}")
+    try:
+        metadata = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"Invalid raw EEG metadata: {path}") from exc
+    expected = {
+        "schema_version": RAW_EEG_SCHEMA_VERSION,
+        "format": "chunked_npz",
+        "session_id": session_id,
+    }
+    mismatches = [
+        f"{key}={metadata.get(key)!r} (expected {value!r})"
+        for key, value in expected.items()
+        if metadata.get(key) != value
+    ]
+    if mismatches:
+        raise RuntimeError(
+            f"Raw EEG metadata does not match resumed recording {path}: "
+            + ", ".join(mismatches)
+        )
 
 
 def _write_json_atomic(path: Path, payload: dict) -> None:

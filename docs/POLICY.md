@@ -142,9 +142,13 @@ eye_difficulty_score =
     / (0.40 + 0.30 + 0.30 + 0.15 + 0.15)
 ```
 
-当前开发配置把单项异常比例设为 `eye_abnormal_ratio=1.20`，任一核心指标达到
-`eye_single_feature_ratio=1.55` 才可单独形成举例候选；Eye 总分门槛为
-`1.30/1.35/1.85`。简单解释仍需两个核心指标异常，或核心指标与回视证据共同支持；
+当前开发配置把单项异常比例设为 `eye_abnormal_ratio=1.25`，任一核心指标达到
+`eye_single_feature_ratio=1.70` 才可单独形成举例候选；Eye 总分门槛为
+`1.35/1.55/2.00`。简单解释仍需两个核心指标异常，或核心指标与回视证据共同支持；
+
+C2 使用独立覆盖参数，避免为了修复 C2 漏检而同时改变 C3 融合规则：异常比例为
+`1.20`，brief/example/detailed 为 `1.15/1.55/2.00`，单核心指标阈值为
+`1.70`。C2 每个 Trial 最多自动询问 2 次，两次可执行 episode 至少间隔 30 秒。
 被试点击“需要/不需要”后会释放新的证据 episode，因此同一题可以在新的疑问证据下再次询问。
 问题做的温和放宽。回视指标只在两侧均有有效
 baseline 时加入，不会因为旧日志缺字段而改变判定。C2/C3 的组合指标仍使用同一套
@@ -253,11 +257,18 @@ AI 正在回答、已有待选择询问或被试注视 AI 面板时不会叠加�
   "eye_duration_weight": 0.30,
   "eye_revisit_count_weight": 0.15,
   "eye_revisit_time_weight": 0.15,
-  "eye_abnormal_ratio": 1.20,
-  "eye_single_feature_ratio": 1.55,
-  "eye_mild_threshold": 1.30,
-  "eye_moderate_threshold": 1.35,
-  "eye_strong_threshold": 1.85,
+  "eye_abnormal_ratio": 1.25,
+  "eye_single_feature_ratio": 1.70,
+  "eye_mild_threshold": 1.35,
+  "eye_moderate_threshold": 1.55,
+  "eye_strong_threshold": 2.00,
+  "c2_eye_abnormal_ratio": 1.20,
+  "c2_eye_single_feature_ratio": 1.70,
+  "c2_eye_mild_threshold": 1.15,
+  "c2_eye_moderate_threshold": 1.55,
+  "c2_eye_strong_threshold": 2.00,
+  "c2_cooldown_seconds": 30.0,
+  "c2_max_automatic_offers_per_trial": 2,
   "eeg_medium_threshold": 50,
   "eeg_high_threshold": 80,
   "eeg_weight": 0.60,

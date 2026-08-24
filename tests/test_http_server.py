@@ -67,6 +67,7 @@ class HTTPServerTests(unittest.TestCase):
             tobii_calibration_supplier=lambda: dict(self.calibration),
             tobii_calibration_starter=start_calibration,
             question_registry=self.question_registry,
+            eeg_acquisition_enabled=False,
         )
         self.server.start()
         self.base = "http://127.0.0.1:%s" % self.server.address[1]
@@ -479,7 +480,9 @@ class HTTPServerTests(unittest.TestCase):
         stored = self._post("/api/collect", {"subjectId": "S 001", "trials": []})
 
         self.assertTrue(health["ok"])
+        self.assertFalse(health["eeg_acquisition_enabled"])
         self.assertFalse(health["eeg_connected"])
+        self.assertEqual(health["eeg_reason"], "eeg_acquisition_disabled")
         self.assertIsNone(attention["visual_load_index"])
         self.assertTrue(stored["ok"])
         self.assertEqual(len(list(self.documents.glob("S_001_*.json"))), 1)

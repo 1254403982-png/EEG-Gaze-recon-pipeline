@@ -154,6 +154,46 @@ class RawEEGRecorderTests(unittest.TestCase):
                     condition=1,
                 )
 
+    def test_flat_session_resumes_without_overwriting_existing_chunks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            first = RawEEGRecorder(root, chunk_seconds=1.0, flat_session=True)
+            first.append(
+                raw_chunk(0, 10),
+                session_id="S001",
+                trial_id="T01",
+                condition=3,
+                phase="reading",
+            )
+            first.close()
+            original_metadata = (root / "metadata.json").read_bytes()
+
+            resumed = RawEEGRecorder(root, chunk_seconds=1.0, flat_session=True)
+            resumed.append(
+                raw_chunk(10, 10),
+                session_id="S001",
+                trial_id="T02",
+                condition=3,
+                phase="reading",
+            )
+            resumed.close()
+
+            chunks = sorted((root / "chunks").glob("chunk_*.npz"))
+            self.assertEqual(
+                [path.name for path in chunks],
+                ["chunk_000000.npz", "chunk_000001.npz"],
+            )
+            with np.load(chunks[0], allow_pickle=False) as payload:
+                np.testing.assert_array_equal(payload["samples"], raw_chunk(0, 10).samples)
+            with np.load(chunks[1], allow_pickle=False) as payload:
+                np.testing.assert_array_equal(payload["samples"], raw_chunk(10, 10).samples)
+            manifest = [
+                json.loads(line)
+                for line in (root / "manifest.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertEqual([entry["chunk_index"] for entry in manifest], [0, 1])
+            self.assertEqual((root / "metadata.json").read_bytes(), original_metadata)
+
 
 if __name__ == "__main__":
     unittest.main()

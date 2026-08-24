@@ -49,6 +49,29 @@ class ApplicationPolicyLatchTests(unittest.TestCase):
             self.assertEqual(released, ["T01"])
             self.assertEqual(app.latest_policy()["policy_id"], 2)
 
+    def test_area_history_suppression_releases_latched_offer(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            released = []
+            policy = SimpleNamespace(
+                evaluate=lambda _state: decision(2, "hold", ["gaze_on_ai_panel"]),
+                release_offer=lambda trial_id: released.append(trial_id),
+            )
+            app = ExperimentApplication(
+                SimpleNamespace(snapshot=lambda: object()),
+                policy,
+                JsonlRecorder(root / "events.jsonl"),
+                JsonlRecorder(root / "policy.jsonl"),
+            )
+            app._pending_policy_offer = decision(3, "offer_brief_explanation", [])
+
+            result = app.acknowledge_policy(3, "suppressed_area_history")
+
+            self.assertTrue(result["acknowledged"])
+            self.assertEqual(result["response"], "suppressed_area_history")
+            self.assertIsNone(app._pending_policy_offer)
+            self.assertEqual(released, ["T01"])
+
 
 if __name__ == "__main__":
     unittest.main()

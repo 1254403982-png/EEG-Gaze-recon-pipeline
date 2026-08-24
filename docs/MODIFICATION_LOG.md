@@ -417,3 +417,26 @@ eeg/online.py                    全通道滑窗与多解码器调度
 - 测试与真实设备验证结果
 - 未解决问题
 ```
+## 2026-08-13: C2 Eye thresholds recalibrated from participants 004 and 005
+
+- Compared all usable C2 Eye difficulty windows for participant 004 (mean 0.815,
+  99th percentile 1.077, maximum 1.203) and participant 005 (mean 0.881,
+  90th percentile 1.443, 95th percentile 1.617, maximum 3.357).
+- Raised the abnormal, brief, example, detailed, and single-core-feature ratios
+  to `1.25/1.35/1.55/2.00/1.70`. This reduces repeated offers for participant
+  profiles like 005 without lowering the global threshold into the dense normal
+  range. Participant 004 remains a baseline-sensitivity case; a fixed global
+  threshold cannot recover that run without greatly over-triggering 005.
+## 2026-08-15: C2-specific Eye sensitivity and offer guardrails
+
+- Recalibrated C2 from participants 004, 005, and the partial 006 run. Their
+  usable C2 Eye-score means were 0.815, 0.881, and 0.402 respectively. At a
+  1.15 threshold, 004 and 006 each contained sustained candidate episodes,
+  while 005 remained a high-episode profile.
+- Added C2-only Eye overrides: abnormal `1.20`, brief `1.15`, example `1.55`,
+  detailed `2.00`, and single-core-feature `1.70`. C3 retains the shared
+  `1.25/1.35/1.55/2.00/1.70` thresholds.
+- Limited C2 to 2 automatic offers per Trial with a 30-second cooldown so the
+  lower brief threshold does not reproduce participant 005's excessive dose.
+- The partial 006 C2 run produced one server-side brief offer but no browser
+  `policy_prompt_shown`; the offer was therefore never presented to the user.

@@ -144,6 +144,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             tobii_provider.request_calibration if tobii_provider is not None else None
         ),
         question_registry=application.run_manager,
+        eeg_acquisition_enabled=args.brainco,
     )
     worker: Optional[EEGAcquisitionWorker] = None
     if args.brainco:
@@ -184,6 +185,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     print("  Experiment: http://%s:%s/experiment" % (host, port))
     print("  Monitor:    http://%s:%s/monitor" % (host, port))
     print("  Health:     http://%s:%s/api/health" % (host, port))
+    print(
+        "  EEG:        %s"
+        % ("BrainCo realtime" if worker is not None else "disabled (--brainco not supplied)")
+    )
     if worker is not None:
         print("  Runs:       %s" % config.storage.run_dir.expanduser().resolve())
     if gaze_worker is not None:

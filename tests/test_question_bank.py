@@ -90,6 +90,11 @@ class QuestionBankTests(unittest.TestCase):
         for needle in (
             "policyPromptedLevels",
             "policyAnsweredLevels",
+            "policyAreaDecisions",
+            "areaId",
+            "policyAreaSuppressionReason",
+            "suppressed_area_history",
+            "rememberPolicyAreaResponse",
             "policyMinimumTrialSeconds: 20",
             "releasePolicyOffer",
             "syncReadingProgress",

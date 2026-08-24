@@ -165,7 +165,10 @@ class ExperimentApplication:
                 }
             self._pending_policy_offer = None
             normalized_response = str(response or "").strip().lower()
-            if normalized_response in {"accepted", "rejected"}:
+            # The browser can suppress an already-answered area/level before
+            # rendering another prompt.  Treat that as an acknowledgement too,
+            # otherwise the latched server offer would be returned on every poll.
+            if normalized_response in {"accepted", "rejected", "suppressed_area_history"}:
                 self.policy.release_offer(pending.trial_id)
             return {
                 "ok": True,

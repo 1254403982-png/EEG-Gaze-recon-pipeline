@@ -2065,6 +2065,10 @@
         // 记录本 Trial 的每次 Policy 主动询问；C2 不设置次数上限
         policyPromptedLevels: [],
         policyAnsweredLevels: [],
+        // Per-area Policy history. Accepted help suppresses all future
+        // automatic prompts for that area; rejected levels are suppressed
+        // independently until all three levels have been rejected.
+        policyAreaDecisions: {},
 
         // EEG信号质量记录
         signalQuality: [],            // [{ quality, timestamp }]
@@ -2713,6 +2717,67 @@
     let lastPresentedPolicyId = null;
     let policyPollInFlight = false;
     let policyPromptPreparing = false;
+
+    const POLICY_EXPLANATION_LEVELS = ["brief", "example", "detailed"];
+
+    function normalizePolicyAreaKey(value) {
+      return String(value || "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLocaleLowerCase()
+        .slice(0, 240);
+    }
+
+    function policyAreaKeyFor(focus, policy, slide, inferred = null) {
+      const stableTargetId = inferred?.areaId || inferred?.screenMapping?.dwell_target?.id;
+      const raw = stableTargetId
+        ? `target:${stableTargetId}`
+        : (focus
+          || policy?.target_aoi
+          || (slide?.id != null ? `slide:${slide.id}` : "current-reading-area"));
+      return normalizePolicyAreaKey(raw) || "current-reading-area";
+    }
+
+    function policyAreaDecisionFor(trial, areaKey) {
+      if (!trial) return { accepted: false, rejectedLevels: [] };
+      if (!trial.policyAreaDecisions || Array.isArray(trial.policyAreaDecisions)) {
+        trial.policyAreaDecisions = {};
+      }
+      const storageKey = `area:${areaKey}`;
+      const existing = trial.policyAreaDecisions[storageKey];
+      const decision = existing && typeof existing === "object" ? existing : {};
+      decision.accepted = decision.accepted === true;
+      decision.rejectedLevels = Array.isArray(decision.rejectedLevels)
+        ? [...new Set(decision.rejectedLevels.filter(level => POLICY_EXPLANATION_LEVELS.includes(level)))]
+        : [];
+      trial.policyAreaDecisions[storageKey] = decision;
+      return decision;
+    }
+
+    function policyAreaSuppressionReason(trial, areaKey, level) {
+      const decision = policyAreaDecisionFor(trial, areaKey);
+      if (decision.accepted) return "area_help_already_accepted";
+      if (decision.rejectedLevels.includes(level)) return "area_level_already_rejected";
+      if (POLICY_EXPLANATION_LEVELS.every(item => decision.rejectedLevels.includes(item))) {
+        return "area_all_levels_rejected";
+      }
+      return null;
+    }
+
+    function rememberPolicyAreaResponse(trial, areaKey, level, response) {
+      const decision = policyAreaDecisionFor(trial, areaKey);
+      if (response === "accepted") {
+        decision.accepted = true;
+      } else if (response === "rejected" && POLICY_EXPLANATION_LEVELS.includes(level)) {
+        decision.rejectedLevels = [...new Set([...decision.rejectedLevels, level])];
+      }
+      decision.lastLevel = level;
+      decision.lastResponse = response;
+      decision.updatedAt = Date.now();
+      saveToLocalStorage();
+      return decision;
+    }
+
     function trialElapsedSeconds() {
       if (!Number.isFinite(state.trialStartedAt)) return null;
       return Math.max(0, (Date.now() - state.trialStartedAt) / 1000);
@@ -2906,10 +2971,37 @@
         return false;
       }
       const focus = inferred?.focus || calibratedFocus || `当前材料《${slide.title}》`;
+      const areaKey = policyAreaKeyFor(focus, options.policy || {}, slide, inferred);
+      const source = options.source || "policy";
+      const suppressionReason = source === "policy"
+        ? policyAreaSuppressionReason(trial, areaKey, level)
+        : null;
+      if (suppressionReason) {
+        // A remembered area decision acknowledges the latched server offer
+        // without rendering another automatic prompt.
+        lastPresentedPolicyId = options.policy?.policy_id ?? lastPresentedPolicyId;
+        setPolicyInteractionLocked(false);
+        await releasePolicyOffer({
+          policy: options.policy || {},
+          areaKey,
+          level,
+          focus,
+        }, "suppressed_area_history");
+        await recordInteraction("policy_prompt_suppressed", {
+          source,
+          explanationLevel: level,
+          focus,
+          areaKey,
+          policyId: options.policy?.policy_id ?? null,
+          reason: suppressionReason,
+        });
+        return false;
+      }
       if (inferred) {
         await recordInteraction("policy_focus_inferred", {
           policyId: options.policy?.policy_id ?? null,
           focus: inferred.focus,
+          areaId: inferred.areaId || inferred.screenMapping?.dwell_target?.id || null,
           region: inferred.region,
           confidence: inferred.confidence,
           evidence: inferred.evidence,
@@ -2922,8 +3014,9 @@
       pendingPolicySuggestion = {
         level,
         policy: options.policy || {},
-        source: options.source || "policy",
+        source,
         focus,
+        areaKey,
         focusInference: inferred,
         sceneFrame: frameSnapshot,
         previousManualLevel: state.lastExplainLevel,
@@ -2965,6 +3058,7 @@
         source: pendingPolicySuggestion.source,
         explanationLevel: level,
         focus,
+        areaKey,
         policyId: pendingPolicySuggestion.policy?.policy_id ?? null,
       });
       responseRow.querySelector('[data-policy-response="accept"]').addEventListener("click", () => {
@@ -3023,6 +3117,7 @@
         if (focusText && focusText.length <= 500) {
           return {
             focus: focusText.slice(0, 120),
+            areaId: target.id || null,
             region: "映射后的阅读区域",
             confidence: Number(target.dwell_ratio) >= 0.6 ? 0.92 : 0.78,
             evidence: `连续轨迹在同一阅读元素停留，样本数 ${target.trajectory_samples || "未知"}`,
@@ -3052,6 +3147,7 @@
       if (!element || !text) return null;
       return {
         focus: text.slice(0, 120),
+        areaId: element.id || null,
         region: "轨迹中心对应的阅读段落",
         confidence: 0.76,
         evidence: `屏幕轨迹中心 (${x.toFixed(3)}, ${y.toFixed(3)}) 落在该段落范围内`,
@@ -3197,6 +3293,7 @@
       recordInteraction("policy_response", {
         response: "accepted",
         source: suggestion.source,
+        areaKey: suggestion.areaKey || null,
         policyId: suggestion.policy?.policy_id ?? null,
       });
       recordConversationMessage({
@@ -3220,6 +3317,7 @@
       recordInteraction("policy_response", {
         response: "rejected",
         source: suggestion.source,
+        areaKey: suggestion.areaKey || null,
         policyId: suggestion.policy?.policy_id ?? null,
       });
       recordConversationMessage({
@@ -3245,7 +3343,13 @@
         await fetch(config.policyUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ policy_id: policyId, response }),
+          body: JSON.stringify({
+            policy_id: policyId,
+            response,
+            area_key: suggestion?.areaKey || null,
+            explanation_level: suggestion?.level || null,
+            focus: suggestion?.focus || null,
+          }),
         });
       } catch (_) {
         // The local UI remains usable if the acknowledgement arrives late;
@@ -3301,6 +3405,12 @@
       trial.policySuggestions.push({
         level: suggestion.level,
         focus: suggestion.focus,
+        areaKey: suggestion.areaKey || policyAreaKeyFor(
+          suggestion.focus,
+          suggestion.policy,
+          getCurrentSlideInfo(),
+          suggestion.focusInference,
+        ),
         focusInference: suggestion.focusInference,
         source: suggestion.source,
         response,
@@ -3308,6 +3418,17 @@
         shownAt: suggestion.shownAt,
         respondedAt: Date.now(),
       });
+      rememberPolicyAreaResponse(
+        trial,
+        suggestion.areaKey || policyAreaKeyFor(
+          suggestion.focus,
+          suggestion.policy,
+          getCurrentSlideInfo(),
+          suggestion.focusInference,
+        ),
+        suggestion.level,
+        response,
+      );
     }
 
     function restoreManualExplainLevel(level) {

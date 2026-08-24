@@ -59,6 +59,15 @@ class PolicyConfig:
     eye_mild_threshold: float = 1.30
     eye_moderate_threshold: float = 1.35
     eye_strong_threshold: float = 1.85
+    # Optional C2-only overrides.  None preserves the shared Eye setting for
+    # backwards-compatible configs and unit tests.
+    c2_eye_abnormal_ratio: float | None = None
+    c2_eye_single_feature_ratio: float | None = None
+    c2_eye_mild_threshold: float | None = None
+    c2_eye_moderate_threshold: float | None = None
+    c2_eye_strong_threshold: float | None = None
+    c2_cooldown_seconds: float | None = None
+    c2_max_automatic_offers_per_trial: int | None = None
     eeg_medium_threshold: float = 40.0
     eeg_high_threshold: float = 70.0
     attention_low_threshold: float = 40.0
@@ -216,6 +225,28 @@ def load_config(path: Path) -> AppConfig:
         raise ValueError(
             "policy.eye_single_feature_ratio must not be below eye_abnormal_ratio."
         )
+    c2_abnormal = policy.c2_eye_abnormal_ratio
+    c2_single = policy.c2_eye_single_feature_ratio
+    c2_mild = policy.c2_eye_mild_threshold
+    c2_moderate = policy.c2_eye_moderate_threshold
+    c2_strong = policy.c2_eye_strong_threshold
+    c2_eye_values = (c2_abnormal, c2_single, c2_mild, c2_moderate, c2_strong)
+    if any(value is not None for value in c2_eye_values):
+        if not all(value is not None for value in c2_eye_values):
+            raise ValueError("all C2 Eye threshold overrides must be supplied together.")
+        assert c2_abnormal is not None and c2_single is not None
+        assert c2_mild is not None and c2_moderate is not None and c2_strong is not None
+        if not (1 <= c2_mild < c2_moderate < c2_strong):
+            raise ValueError("C2 Eye ratio thresholds must be ordered above baseline.")
+        if c2_abnormal < 1 or c2_single < c2_abnormal:
+            raise ValueError("C2 Eye abnormal/single-feature thresholds are invalid.")
+    if policy.c2_cooldown_seconds is not None and policy.c2_cooldown_seconds < 0:
+        raise ValueError("policy.c2_cooldown_seconds must be non-negative.")
+    if (
+        policy.c2_max_automatic_offers_per_trial is not None
+        and policy.c2_max_automatic_offers_per_trial < 0
+    ):
+        raise ValueError("policy.c2_max_automatic_offers_per_trial must be non-negative.")
     if not (
         0 <= policy.eeg_medium_threshold
         < policy.eeg_high_threshold
